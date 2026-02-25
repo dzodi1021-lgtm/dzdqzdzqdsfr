@@ -1,9 +1,10 @@
+```html
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Live Discord Presence</title>
+  <title>DarkSon</title>
 
   <style>
     :root{
@@ -706,9 +707,8 @@
           </div>
         </div>
 
-        <div class="sourceOnly" id="sourceLine">
-          Source: Lanyard WebSocket • Real-time updates.
-        </div>
+        <!-- Source line removed -->
+        <div class="sourceOnly" id="sourceLine"></div>
       </div>
     </div>
 
@@ -964,8 +964,6 @@
       if (ava) els.avatar.src = ava;
 
       if (data?.spotify) {
-        els.sourceLine.style.display = "none";
-
         const art = data.spotify.album_art_url || "";
         els.activityIconBox.innerHTML = art ? `<img src="${art}" alt="album art" />` : iconSVG("spotify");
 
@@ -988,14 +986,11 @@
 
       const activity = pickNonSpotifyActivity(data?.activities);
       if (!activity) {
-        els.sourceLine.style.display = "block";
         els.activityIconBox.innerHTML = iconSVG("");
         els.activityTitle.textContent = "No activity detected";
         els.activityDesc.textContent = "—";
         return;
       }
-
-      els.sourceLine.style.display = "none";
 
       const name = activity.name || "Activity";
       const details = activity.details || "";
@@ -1007,50 +1002,153 @@
       els.activityDesc.textContent = extra || "Active now.";
     };
 
-    const ws = new WebSocket("wss://api.lanyard.rest/socket");
+    /* ===========================
+       LANYARD FIXES:
+       - instant load via REST
+       - auto reconnect + backoff
+       - watchdog (stale connection)
+       - reconnect when tab becomes visible / online
+       =========================== */
 
+    const LANYARD_REST = `https://api.lanyard.rest/v1/users/${USER_ID}`;
+    let ws = null;
     let heartbeatTimer = null;
+    let reconnectTimer = null;
+
+    let lastPresenceAt = 0;
+    let reconnectAttempts = 0;
+    const BASE_BACKOFF = 700;
+    const MAX_BACKOFF  = 15000;
+    const STALE_MS     = 45_000;   // if no presence update for 45s, consider stale
+    const WATCHDOG_MS  = 10_000;
+
+    const safeCloseWS = () => {
+      try { if (ws && ws.readyState <= 1) ws.close(1000, "reconnect"); } catch {}
+      ws = null;
+    };
+
+    const stopHeartbeat = () => {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    };
+
+    const stopReconnectTimer = () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    };
+
+    const scheduleReconnect = (why) => {
+      stopHeartbeat();
+      stopReconnectTimer();
+      safeCloseWS();
+
+      reconnectAttempts++;
+      const jitter = Math.random() * 300;
+      const wait = Math.min(MAX_BACKOFF, BASE_BACKOFF * Math.pow(1.6, reconnectAttempts)) + jitter;
+
+      reconnectTimer = setTimeout(() => {
+        connectWS();
+      }, wait);
+    };
 
     const startHeartbeat = (interval) => {
-      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      stopHeartbeat();
       heartbeatTimer = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ op: 3 }));
+        try{
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ op: 3 }));
+          }
+        }catch{
+          scheduleReconnect("heartbeat send failed");
+        }
       }, interval);
     };
 
-    ws.addEventListener("open", () => {
-      ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: USER_ID } }));
-    });
+    const connectWS = () => {
+      stopReconnectTimer();
 
-    ws.addEventListener("message", (event) => {
-      const msg = JSON.parse(event.data);
-
-      if (msg.op === 1) {
-        startHeartbeat(msg.d.heartbeat_interval);
+      try{
+        ws = new WebSocket("wss://api.lanyard.rest/socket");
+      }catch{
+        scheduleReconnect("ws ctor failed");
         return;
       }
 
-      if (msg.op === 0) {
-        if (msg.t === "INIT_STATE") renderPresence(msg.d);
-        if (msg.t === "PRESENCE_UPDATE") renderPresence(msg.d);
+      ws.addEventListener("open", () => {
+        reconnectAttempts = 0;
+        try{
+          ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: USER_ID } }));
+        }catch{
+          scheduleReconnect("subscribe send failed");
+        }
+      });
+
+      ws.addEventListener("message", (event) => {
+        let msg = null;
+        try { msg = JSON.parse(event.data); } catch { return; }
+
+        if (msg.op === 1) {
+          if (msg?.d?.heartbeat_interval) startHeartbeat(msg.d.heartbeat_interval);
+          return;
+        }
+
+        if (msg.op === 0) {
+          if (msg.t === "INIT_STATE" || msg.t === "PRESENCE_UPDATE") {
+            lastPresenceAt = Date.now();
+            renderPresence(msg.d);
+          }
+        }
+      });
+
+      ws.addEventListener("close", () => {
+        stopHeartbeat();
+        scheduleReconnect("ws close");
+      });
+
+      ws.addEventListener("error", () => {
+        scheduleReconnect("ws error");
+      });
+    };
+
+    const fetchInitialPresence = async () => {
+      try{
+        const r = await fetch(LANYARD_REST, { cache: "no-store" });
+        const j = await r.json();
+        if (j && j.success && j.data) {
+          lastPresenceAt = Date.now();
+          renderPresence(j.data);
+        }
+      }catch{}
+    };
+
+    // Watchdog: if WS silently dies / stops updating
+    setInterval(() => {
+      if (!ws) return;
+      if (document.hidden) return;
+      if (!navigator.onLine) return;
+      const now = Date.now();
+      if (lastPresenceAt && (now - lastPresenceAt > STALE_MS)) {
+        scheduleReconnect("stale");
+      }
+    }, WATCHDOG_MS);
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        fetchInitialPresence();
+        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+          scheduleReconnect("visible");
+        }
       }
     });
 
-    ws.addEventListener("close", () => {
-      if (heartbeatTimer) clearInterval(heartbeatTimer);
-      heartbeatTimer = null;
-
-      stopSpotifyTicker();
-
-      els.statusText.textContent = "offline";
-      const [c, glow] = statusColor("offline");
-      els.statusDot.style.background = c;
-      els.statusDot.style.boxShadow = `0 0 0 4px ${glow}`;
+    window.addEventListener("online", () => {
+      fetchInitialPresence();
+      scheduleReconnect("online");
     });
 
-    ws.addEventListener("error", () => {
-      els.username.textContent = "WebSocket error";
-    });
+    // Instant UI: REST first, then WS
+    fetchInitialPresence();
+    connectWS();
 
     els.avatar.addEventListener("click", async () => {
       try {
@@ -1374,3 +1472,4 @@
   </script>
 </body>
 </html>
+```
