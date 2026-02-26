@@ -312,7 +312,6 @@ function buildRawBlockedPage(scriptName) {
         <p class="subtitle">${escapeHtml(subtitle)}</p>
         <p class="msg">
           <strong>Stop trying to get the source code I'm going to add you in the files</strong><br/>
-          Tu peux inspecter autant que tu veux, le script n'est pas livré ici pour le navigateur.
         </p>
       </div>
     </div>
@@ -359,7 +358,6 @@ module.exports = async (req, res) => {
     res.send(
       buildHtmlCardPage({
         title: "Atleast im not in the files",
-        subtitle: `Script: ${scriptName}`,
       })
     );
     return;
@@ -402,3 +400,4 @@ module.exports = async (req, res) => {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.send(content);
 };
+
