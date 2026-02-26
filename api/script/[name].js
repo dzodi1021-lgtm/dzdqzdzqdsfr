@@ -1,402 +1,320 @@
-const path = require("path");
-const fs = require("fs").promises;
+'use strict';
 
-// ----- Helpers -----
-const rootDir = process.cwd();
-const SCRIPTS_DIR = path.join(rootDir, "scripts");
+const path = require('path');
+const fs = require('fs/promises');
 
-function sanitizeName(name) {
-  return name.replace(/[^a-zA-Z0-9_-]/g, "");
+const ROOT_DIR = process.cwd();
+const SCRIPTS_DIR = path.join(ROOT_DIR, 'scripts');
+const EXTENSIONS = ['.lua', '.txt'];
+const MAX_NAME_LENGTH = 80;
+
+function sanitizeName(value) {
+  return String(value ?? '')
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, '')
+    .slice(0, MAX_NAME_LENGTH);
 }
 
-async function findScriptFile(name) {
-  const exts = [".txt", ".lua"];
-  for (const ext of exts) {
-    const tryPath = path.join(SCRIPTS_DIR, name + ext);
+async function findScriptFile(scriptName) {
+  for (const ext of EXTENSIONS) {
+    const fullPath = path.join(SCRIPTS_DIR, scriptName + ext);
     try {
-      await fs.access(tryPath);
-      return tryPath;
-    } catch {
-      // ignore
-    }
+      await fs.access(fullPath);
+      return fullPath;
+    } catch {}
   }
   return null;
 }
 
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
-// Page humour (vue non-raw)
-function buildHtmlCardPage({ title, subtitle }) {
-  const jeffImgUrl = "https://i.postimg.cc/Jzm7phVG/image.png";
+function getHeader(headers, name) {
+  if (!headers) return '';
+  const key = String(name).toLowerCase();
+  return String(headers[key] ?? headers[name] ?? '');
+}
 
-  return `
-<!doctype html>
-<html lang="en">
+function isBrowserLikeRequest(req) {
+  const headers = req?.headers || {};
+  const accept = getHeader(headers, 'accept').toLowerCase();
+  const ua = getHeader(headers, 'user-agent').toLowerCase();
+  const secFetchDest = getHeader(headers, 'sec-fetch-dest').toLowerCase();
+  const secFetchMode = getHeader(headers, 'sec-fetch-mode').toLowerCase();
+
+  if (secFetchDest === 'document' || secFetchMode === 'navigate') return true;
+  if (accept.includes('text/html')) return true;
+
+  return /(mozilla|chrome|safari|firefox|edg\/)/.test(ua);
+}
+
+function applyCommonHeaders(res) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+}
+
+function applyHtmlHeaders(res) {
+  applyCommonHeaders(res);
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; img-src data:; style-src 'unsafe-inline'"
+  );
+}
+
+function respond(res, status, contentType, body, extraHeaders) {
+  if (typeof res.status === 'function') res.status(status);
+  else res.statusCode = status;
+
+  if (contentType) res.setHeader('Content-Type', contentType);
+
+  if (extraHeaders) {
+    for (const [k, v] of Object.entries(extraHeaders)) res.setHeader(k, v);
+  }
+
+  if (typeof res.send === 'function') res.send(body);
+  else res.end(body);
+}
+
+const ICON_SVG = `
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <path d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.6" />
+  <path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.6" />
+  <path d="M8 12h8M8 16h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+</svg>
+`.trim();
+
+function buildCardPage({ title, subtitle, chips = [], hintHtml = '', accent = '#7dd3fc' }) {
+  const safeTitle = escapeHtml(title);
+  const safeSubtitle = escapeHtml(subtitle || '');
+
+  const accentColor = String(accent || '#7dd3fc');
+  const accentGlow = accentColor.length === 7 ? `${accentColor}33` : accentColor;
+
+  const chipHtml = chips
+    .map((c) => `<span class="chip">${escapeHtml(c)}</span>`)
+    .join('');
+
+  const hint = String(hintHtml || '');
+
+  return `<!doctype html>
+<html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <title>${escapeHtml(title)}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>${safeTitle}</title>
   <style>
     :root{
-      --bg1:#050816;
-      --bg2:#0b1230;
-      --card: rgba(10, 16, 38, .80);
-      --stroke: rgba(255,255,255,.10);
-      --text:#eaf0ff;
-      --muted:rgba(234,240,255,.70);
-      --shadow: 0 22px 80px rgba(0,0,0,.75);
-      --radius: 18px;
+      --bg0:#060814;
+      --bg1:#0a1022;
+      --card: rgba(255,255,255,.055);
+      --stroke: rgba(255,255,255,.11);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.68);
+      --shadow: 0 22px 70px rgba(0,0,0,.60);
+      --radius: 16px;
+      --accent: ${escapeHtml(accentColor)};
+      --accentGlow: ${escapeHtml(accentGlow)};
     }
     *{ box-sizing:border-box; }
     body{
       margin:0;
       min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 20% 15%, rgba(77,120,255,.25), transparent 60%),
-        radial-gradient(900px 500px at 80% 20%, rgba(82,255,197,.14), transparent 55%),
-        radial-gradient(900px 600px at 60% 90%, rgba(255,143,77,.10), transparent 60%),
-        linear-gradient(160deg, var(--bg1), var(--bg2));
-    }
-    .card{
-      position:relative;
-      width:min(480px, 92vw);
-      background:var(--card);
-      border-radius:var(--radius);
-      border:1px solid var(--stroke);
-      box-shadow:var(--shadow);
-      padding:18px 18px 16px;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      overflow:hidden;
-    }
-    .card::before{
-      content:"";
-      position:absolute;
-      inset:-1px;
-      background:
-        radial-gradient(520px 240px at 12% 0%, rgba(140,180,255,.20), transparent 60%),
-        radial-gradient(520px 320px at 88% 0%, rgba(120,255,210,.14), transparent 55%);
-      opacity:.95;
-      pointer-events:none;
-    }
-    .inner{
-      position:relative;
-      display:flex;
-      gap:16px;
-      align-items:center;
-    }
-    .imgBox{
-      width:96px;
-      height:96px;
-      border-radius:22px;
-      border:1px solid rgba(255,255,255,.16);
-      overflow:hidden;
-      background:rgba(255,255,255,.06);
-      box-shadow:0 16px 45px rgba(0,0,0,.6);
-      flex:0 0 auto;
       display:grid;
       place-items:center;
+      padding:28px 16px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 560px at 20% 10%, var(--accentGlow), transparent 60%),
+        radial-gradient(860px 520px at 92% 18%, rgba(34,197,94,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
     }
-    .imgBox img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
+    .card{
+      width:min(740px, 96vw);
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
-    .content{
-      min-width:0;
-      flex:1 1 auto;
+    .top{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      padding:18px 18px 16px 18px;
     }
-    .title{
+    .icon{
+      width:44px;
+      height:44px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--accent);
+      flex:0 0 auto;
+    }
+    .icon svg{ width:26px; height:26px; display:block; }
+    .hgroup{ min-width:0; flex:1 1 auto; }
+    h1{
       margin:0;
       font-size:18px;
-      font-weight:900;
+      font-weight:800;
       letter-spacing:.2px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      line-height:1.2;
     }
-    .subtitle{
-      margin:6px 0 10px;
+    .sub{
+      margin:6px 0 0 0;
       font-size:13px;
       color:var(--muted);
-      white-space:nowrap;
+      line-height:1.45;
       overflow:hidden;
       text-overflow:ellipsis;
     }
-    .pillRow{
+    .chips{
       display:flex;
-      gap:8px;
-      align-items:center;
       flex-wrap:wrap;
+      gap:8px;
+      padding:0 18px 14px 18px;
     }
-    .pill{
+    .chip{
       display:inline-flex;
       align-items:center;
-      gap:6px;
       padding:7px 10px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(255,255,255,.05);
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color:rgba(255,255,255,.82);
       font-size:12px;
-      color:rgba(234,240,255,.85);
-    }
-    .hint{
-      margin-top:10px;
-      font-size:11px;
-      color:rgba(234,240,255,.58);
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="inner">
-      <div class="imgBox" aria-hidden="true">
-        <img src="${jeffImgUrl}" alt="hidden content" />
-      </div>
-      <div class="content">
-        <p class="title">${escapeHtml(title)}</p>
-        <p class="subtitle">${escapeHtml(subtitle)}</p>
-        <div class="pillRow">
-          <span class="pill">Atleast im not in the files</span>
-          <span class="pill">Script endpoint</span>
-        </div>
-        <p class="hint">
-          Cette page montre juste que le script existe.<br/>
-          Le contenu brut est seulement utilisé depuis le client Lua.
-        </p>
-      </div>
-    </div>
-  </div>
-</body>
-</html>
-`;
-}
-
-// Page troll pour ?raw=1 vue depuis un navigateur
-function buildRawBlockedPage(scriptName) {
-  const jeffImgUrl = "https://i.postimg.cc/Jzm7phVG/image.png";
-  const title = "Nice try.";
-  const subtitle = scriptName
-    ? `Script: ${scriptName}`
-    : "Protected raw endpoint";
-
-  return `
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(title)}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --bg1:#050816;
-      --bg2:#0b1230;
-      --card: rgba(10, 16, 38, .85);
-      --stroke: rgba(255,255,255,.14);
-      --text:#eaf0ff;
-      --muted:rgba(234,240,255,.72);
-      --shadow: 0 26px 90px rgba(0,0,0,.80);
-      --radius: 20px;
-    }
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 20% 15%, rgba(77,120,255,.25), transparent 60%),
-        radial-gradient(900px 500px at 80% 20%, rgba(82,255,197,.18), transparent 55%),
-        radial-gradient(900px 600px at 60% 90%, rgba(255,143,77,.14), transparent 60%),
-        linear-gradient(160deg, var(--bg1), var(--bg2));
-    }
-    .card{
-      position:relative;
-      width:min(520px, 94vw);
-      background:var(--card);
-      border-radius:var(--radius);
-      border:1px solid var(--stroke);
-      box-shadow:var(--shadow);
-      padding:20px 20px 18px;
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
-      overflow:hidden;
-    }
-    .card::before{
-      content:"";
-      position:absolute;
-      inset:-1px;
-      background:
-        radial-gradient(620px 260px at 18% 0%, rgba(140,180,255,.22), transparent 60%),
-        radial-gradient(520px 340px at 88% 0%, rgba(120,255,210,.16), transparent 55%);
-      opacity:.95;
-      pointer-events:none;
-    }
-    .inner{
-      position:relative;
-      display:flex;
-      gap:18px;
-      align-items:center;
-    }
-    .imgBox{
-      width:110px;
-      height:110px;
-      border-radius:26px;
-      border:1px solid rgba(255,255,255,.18);
-      overflow:hidden;
-      background:rgba(255,255,255,.08);
-      box-shadow:0 18px 55px rgba(0,0,0,.75);
-      flex:0 0 auto;
-      display:grid;
-      place-items:center;
-    }
-    .imgBox img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .content{
-      min-width:0;
-      flex:1 1 auto;
-    }
-    .title{
-      margin:0;
-      font-size:19px;
-      font-weight:900;
-      letter-spacing:.2px;
-    }
-    .subtitle{
-      margin:6px 0 10px;
-      font-size:13px;
-      color:var(--muted);
       white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
     }
-    .msg{
-      margin:8px 0 0;
-      font-size:13px;
+    .footer{
+      padding:14px 18px 18px 18px;
+      color:rgba(255,255,255,.60);
+      font-size:12px;
       line-height:1.5;
-      color:var(--text);
     }
-    .msg strong{
-      font-weight:900;
+    .footer code{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(0,0,0,.30);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.86);
+      white-space: nowrap;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="inner">
-      <div class="imgBox" aria-hidden="true">
-        <img src="${jeffImgUrl}" alt="epstein" />
-      </div>
-      <div class="content">
-        <p class="title">${escapeHtml(title)}</p>
-        <p class="subtitle">${escapeHtml(subtitle)}</p>
-        <p class="msg">
-          <strong>Stop trying to get the source code I'm going to add you in the files</strong><br/>
-        </p>
+  <main class="card" role="main">
+    <div class="top">
+      <div class="icon">${ICON_SVG}</div>
+      <div class="hgroup">
+        <h1>${safeTitle}</h1>
+        ${safeSubtitle ? `<p class="sub">${safeSubtitle}</p>` : ``}
       </div>
     </div>
-  </div>
+    ${chipHtml ? `<div class="chips">${chipHtml}</div>` : ``}
+    ${hint ? `<div class="footer">${hint}</div>` : ``}
+  </main>
 </body>
-</html>
-`;
+</html>`;
 }
 
-// ----- Handler -----
+function buildExistsPage(scriptName) {
+  return buildCardPage({
+    title: "At least I'm not in the files",
+    subtitle: `Script détecté : ${scriptName}`,
+    chips: ['Script endpoint', 'Vue non-raw'],
+    hintHtml:
+      "Cette page confirme l'existence du script. Le contenu brut est consommé par le client Lua via <code>?raw=1</code>.",
+    accent: '#60a5fa',
+  });
+}
+
+function buildNotFoundPage(scriptName) {
+  return buildCardPage({
+    title: 'Script introuvable',
+    subtitle: `Aucun script nommé "${scriptName}"`,
+    chips: ['404', 'scripts/'],
+    hintHtml:
+      "Vérifie le nom demandé et la présence du fichier dans <code>scripts/</code> (extensions supportées : <code>.lua</code> et <code>.txt</code>).",
+    accent: '#fbbf24',
+  });
+}
+
+function buildRawBlockedPage(scriptName) {
+  return buildCardPage({
+    title: 'Nice try.',
+    subtitle: `Accès raw bloqué : ${scriptName}`,
+    chips: ['Accès navigateur bloqué', 'Raw endpoint'],
+    hintHtml: 'Ce endpoint ne sert pas le contenu brut dans un navigateur.',
+    accent: '#fb7185',
+  });
+}
+
 module.exports = async (req, res) => {
-  const { name, raw } = req.query;
-  const method = req.method || "GET";
-  const wantRaw = raw === "1";
-  const scriptName = sanitizeName(name || "");
+  const query = req?.query || {};
+  const params = req?.params || {};
+  const nameInput = query.name ?? params.name ?? '';
+  const scriptName = sanitizeName(nameInput);
+  const wantRaw = String(query.raw ?? '') === '1';
+  const method = String(req?.method || 'GET').toUpperCase();
+
+  if (method !== 'GET') {
+    applyCommonHeaders(res);
+    respond(res, 405, 'text/plain; charset=utf-8', 'Method not allowed');
+    return;
+  }
 
   if (!scriptName) {
-    res.status(400).send("Invalid script name");
-    return;
-  }
-
-  // --- Vue non-raw (GET /api/script/:name) ---
-  if (!wantRaw) {
-    if (method !== "GET") {
-      res.status(405).send("Method not allowed");
-      return;
-    }
-
-    const filePath = await findScriptFile(scriptName);
-    if (!filePath) {
-      res
-        .status(404)
-        .setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(
-        buildHtmlCardPage({
-          title: "Script not found",
-          subtitle: `No script named "${scriptName}"`,
-        })
-      );
-      return;
-    }
-
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(
-      buildHtmlCardPage({
-        title: "Atleast im not in the files",
-      })
-    );
-    return;
-  }
-
-  // --- Vue raw (GET /api/script/:name?raw=1) ---
-  if (method !== "GET") {
-    res.status(405).send("Method not allowed");
+    applyCommonHeaders(res);
+    respond(res, 400, 'text/plain; charset=utf-8', 'Invalid script name');
     return;
   }
 
   const filePath = await findScriptFile(scriptName);
+
+  if (!wantRaw) {
+    applyHtmlHeaders(res);
+    res.setHeader('Cache-Control', 'no-store');
+    if (!filePath) {
+      respond(res, 404, 'text/html; charset=utf-8', buildNotFoundPage(scriptName));
+      return;
+    }
+    respond(res, 200, 'text/html; charset=utf-8', buildExistsPage(scriptName));
+    return;
+  }
+
+  res.setHeader('Vary', 'Accept, User-Agent, Sec-Fetch-Dest, Sec-Fetch-Mode');
+
   if (!filePath) {
-    res.status(404).type("text/plain; charset=utf-8").send("Script not found");
+    applyCommonHeaders(res);
+    respond(res, 404, 'text/plain; charset=utf-8', 'Script not found', { 'Cache-Control': 'no-store' });
     return;
   }
 
-  const accept = String(req.headers["accept"] || "").toLowerCase();
-  const ua = String(req.headers["user-agent"] || "").toLowerCase();
-
-  // Heuristique : si ça ressemble à un navigateur → page HTML troll,
-  // sinon → renvoyer le Lua brut (pour loadstring / HttpGet).
-  const looksLikeBrowser =
-    accept.includes("text/html") ||
-    ua.includes("mozilla") ||
-    ua.includes("chrome") ||
-    ua.includes("safari") ||
-    ua.includes("edg/");
-
-  if (looksLikeBrowser) {
-    res
-      .status(200)
-      .setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(buildRawBlockedPage(scriptName));
+  if (isBrowserLikeRequest(req)) {
+    applyHtmlHeaders(res);
+    respond(res, 200, 'text/html; charset=utf-8', buildRawBlockedPage(scriptName), { 'Cache-Control': 'no-store' });
     return;
   }
 
-  // Client non-navigateur : on donne le script brut
-  const content = await fs.readFile(filePath, "utf8");
-  res.setHeader("Content-Type", "text/plain; charset=utf-8");
-  res.send(content);
+  try {
+    const content = await fs.readFile(filePath, 'utf8');
+    applyCommonHeaders(res);
+    respond(res, 200, 'text/plain; charset=utf-8', content, { 'Cache-Control': 'no-store' });
+  } catch {
+    applyCommonHeaders(res);
+    respond(res, 500, 'text/plain; charset=utf-8', 'Internal error', { 'Cache-Control': 'no-store' });
+  }
 };
