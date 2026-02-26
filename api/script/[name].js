@@ -5,23 +5,23 @@ const ROOT = process.cwd();
 const SCRIPTS_DIR = path.join(ROOT, "scripts");
 
 function cleanName(name) {
-  return String(name || "").replace(/[^a-zA-Z0-9_-]/g, "");
+  return name.replace(/[^a-zA-Z0-9_-]/g, "");
 }
 
 async function resolveScript(name) {
   const extensions = [".lua", ".txt"];
   for (const ext of extensions) {
-    const file = path.join(SCRIPTS_DIR, name + ext);
+    const full = path.join(SCRIPTS_DIR, name + ext);
     try {
-      await fs.access(file);
-      return file;
+      await fs.access(full);
+      return full;
     } catch {}
   }
   return null;
 }
 
-function safe(str) {
-  return String(str)
+function escapeHtml(input) {
+  return String(input)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -29,151 +29,118 @@ function safe(str) {
     .replaceAll("'", "&#039;");
 }
 
-function buildIndexPage(title) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>${safe(title)}</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{
-  background:#0f1115;
-  color:#e6e6e6;
-  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.wrapper{
-  width:min(460px,92vw);
-  background:#161a22;
-  border:1px solid #262b36;
-  border-radius:14px;
-  padding:28px;
-  box-shadow:0 25px 60px rgba(0,0,0,.6);
-}
-h1{
-  font-size:18px;
-  font-weight:700;
-  margin-bottom:8px;
-}
-p{
-  font-size:13px;
-  color:#9da3b0;
-}
-.tag{
-  margin-top:14px;
-  font-size:11px;
-  padding:6px 10px;
-  background:#1e2430;
-  border:1px solid #2c3444;
-  border-radius:999px;
-  display:inline-block;
-}
-</style>
-</head>
-<body>
-<div class="wrapper">
-  <h1>${safe(title)}</h1>
-  <p>This endpoint exists.</p>
-  <div class="tag">Script delivery node</div>
-</div>
-</body>
-</html>`;
+function animatedTitleScript(text) {
+  return `
+<script>
+(function(){
+  const base = "${text}";
+  let i = 0;
+  function tick(){
+    document.title = base.slice(i) + " " + base.slice(0, i);
+    i = (i + 1) % base.length;
+  }
+  setInterval(tick, 120);
+})();
+</script>
+`;
 }
 
-function buildBlockedPage() {
+function renderCardPage(title) {
   const img = "https://i.postimg.cc/Jzm7phVG/image.png";
 
-  return `<!DOCTYPE html>
+  return `
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Stop trying to skid</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(title)}</title>
 <style>
+:root{
+  --bg:#070b1a;
+  --card:#0f172a;
+  --border:rgba(255,255,255,.08);
+  --text:#e5e7eb;
+  --muted:rgba(229,231,235,.55);
+  --accent:#3b82f6;
+}
 *{box-sizing:border-box;margin:0;padding:0}
 body{
-  background:#0e1014;
-  color:#f1f1f1;
-  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  height:100vh;
+  min-height:100vh;
   display:flex;
   align-items:center;
   justify-content:center;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:radial-gradient(circle at 20% 20%, #111827, #070b1a 60%);
+  color:var(--text);
 }
 .card{
-  width:min(520px,94vw);
-  background:#171b23;
-  border:1px solid #272d3a;
-  border-radius:16px;
-  padding:30px;
-  display:flex;
-  gap:22px;
-  align-items:center;
-  box-shadow:0 30px 70px rgba(0,0,0,.7);
+  width:min(480px,90vw);
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:24px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);
+  backdrop-filter:blur(12px);
 }
-.image{
-  width:120px;
-  height:120px;
+.top{
+  display:flex;
+  gap:18px;
+  align-items:center;
+}
+.avatar{
+  width:110px;
+  height:110px;
   border-radius:18px;
   overflow:hidden;
+  border:1px solid var(--border);
   flex-shrink:0;
-  border:1px solid #2d3443;
 }
-.image img{
+.avatar img{
   width:100%;
   height:100%;
   object-fit:cover;
 }
-.content{
-  flex:1;
-}
-.content h2{
-  font-size:20px;
+.content h1{
+  font-size:18px;
   font-weight:700;
-  margin-bottom:10px;
+  margin-bottom:8px;
 }
 .content p{
-  font-size:14px;
-  color:#b8c0d0;
-  line-height:1.6;
+  font-size:13px;
+  line-height:1.5;
+  color:var(--muted);
+}
+.footer{
+  margin-top:16px;
+  font-size:12px;
+  color:var(--muted);
 }
 </style>
 </head>
 <body>
 <div class="card">
-  <div class="image">
-    <img src="${img}" alt="epstein">
-  </div>
-  <div class="content">
-    <h2>Stop trying to skid</h2>
-    <p>Keep trying to see the code and im gonna put you on the files</p>
-    <p style="margin-top:12px;font-size:12px;color:#8c94a8;">
-      &lt;-- btw this is epstein cuz you have to be very uneducated to attempt to skid my scripts
-    </p>
+  <div class="top">
+    <div class="avatar">
+      <img src="${img}" alt="epstein">
+    </div>
+    <div class="content">
+      <h1>Keep trying to see the code and im gonna put you on the files</h1>
+      <p>&lt;-- btw this is epstein cuz you have to be very uneducated to attempt to skid my scripts</p>
+    </div>
   </div>
 </div>
-<script>
-const text = "Stop trying to skid   ";
-let i = 0;
-setInterval(() => {
-  document.title = text.substring(i) + text.substring(0,i);
-  i = (i + 1) % text.length;
-}, 150);
-</script>
+${animatedTitleScript("Stop trying to skid")}
 </body>
-</html>`;
+</html>
+`;
 }
 
 module.exports = async (req, res) => {
   const { name, raw } = req.query;
   const method = req.method || "GET";
-  const scriptName = cleanName(name);
   const wantRaw = raw === "1";
+  const scriptName = cleanName(name || "");
 
   if (!scriptName) {
     res.status(400).send("Invalid script name");
@@ -187,15 +154,13 @@ module.exports = async (req, res) => {
     }
 
     const file = await resolveScript(scriptName);
-
     if (!file) {
-      res.status(404).setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(buildIndexPage("Script not found"));
+      res.status(404).send(renderCardPage("Stop trying to skid"));
       return;
     }
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(buildIndexPage("Access restricted"));
+    res.send(renderCardPage("Stop trying to skid"));
     return;
   }
 
@@ -205,9 +170,8 @@ module.exports = async (req, res) => {
   }
 
   const file = await resolveScript(scriptName);
-
   if (!file) {
-    res.status(404).type("text/plain; charset=utf-8").send("Script not found");
+    res.status(404).type("text/plain").send("Script not found");
     return;
   }
 
@@ -222,8 +186,8 @@ module.exports = async (req, res) => {
     ua.includes("edg/");
 
   if (browser) {
-    res.status(200).setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(buildBlockedPage());
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(renderCardPage("Stop trying to skid"));
     return;
   }
 
