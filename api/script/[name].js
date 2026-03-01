@@ -87,25 +87,21 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
   const safeSubtitle = escapeHtml(subtitle || '');
   const accentColor = escapeHtml(accent);
 
-  const lines = Array.isArray(tickerLines) ? tickerLines.filter(Boolean).slice(0, 40) : [];
+  const linesRaw = Array.isArray(tickerLines) ? tickerLines.filter(Boolean).slice(0, 64) : [];
+  const lines = linesRaw.length ? linesRaw : ['stop trying to skid', 'learn to code', 'nice try'];
   const escapedLines = lines.map((s) => escapeHtml(s));
-
-  const t1 = escapedLines.slice(0, 12);
-  const t2 = escapedLines.slice(12, 24);
-  const t3 = escapedLines.slice(24, 36);
-
-  const mkRow = (arr) => {
-    const base = arr.length ? arr : ['stop trying to skid', 'learn to code', 'nice try'];
-    const items = base.map((x) => `<span class="tickItem">${x}</span>`).join('');
-    return `<div class="tickerTrack">${items}${items}${items}</div>`;
-  };
 
   const iconHtml = iconUrl
     ? `<img src="${escapeHtml(iconUrl)}" alt="epstein" />`
     : `<span class="fallbackIcon"></span>`;
 
-  const titleScrollText = (lines[0] || 'STOP TRYING TO SKID').toUpperCase();
+  const titleScrollText = (linesRaw[0] || 'STOP TRYING TO SKID').toUpperCase();
   const titleScroll = escapeHtml(`${titleScrollText}   •   `);
+
+  // One continuous ticker line (already filled at load): duplicate content and loop -50%.
+  const tickerItemHtml = escapedLines
+    .map((x) => `<span class="tickItem">${x}</span>`)
+    .join('');
 
   return `<!doctype html>
 <html lang="en">
@@ -116,17 +112,19 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
   <title>${safeTitle}</title>
   <style>
     :root{
-      --bg0:#060612;
-      --bg1:#0a0b16;
+      --bg0:#050511;
+      --bg1:#090a18;
       --card: rgba(255,255,255,.055);
       --stroke: rgba(255,255,255,.12);
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.72);
-      --shadow: 0 28px 90px rgba(0,0,0,.70);
+      --shadow: 0 30px 100px rgba(0,0,0,.72);
       --radius: 18px;
       --accent: ${accentColor};
     }
+
     *{ box-sizing:border-box; }
+    html, body{ height:100%; }
     body{
       margin:0;
       min-height:100vh;
@@ -136,29 +134,51 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:var(--text);
       background:
-        radial-gradient(900px 560px at 18% 10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
-        radial-gradient(880px 540px at 86% 20%, rgba(99,102,241,.16), transparent 60%),
+        radial-gradient(900px 560px at 18% 10%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 60%),
+        radial-gradient(880px 540px at 86% 20%, rgba(99,102,241,.18), transparent 60%),
+        radial-gradient(760px 520px at 50% 110%, rgba(34,197,94,.10), transparent 60%),
         linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
     }
+
+    /* subtle noise */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.07;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.08), rgba(255,255,255,.08) 1px, transparent 1px, transparent 3px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.06) 1px, transparent 1px, transparent 4px);
+      mix-blend-mode:overlay;
+      filter: blur(.2px);
+    }
+
     .card{
-      width:min(880px, 96vw);
+      width:min(920px, 96vw);
       background:var(--card);
       border:1px solid var(--stroke);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
       overflow:hidden;
       position:relative;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
+
     .card::before{
       content:"";
       position:absolute;
       inset:-2px;
       background:
-        radial-gradient(520px 220px at 10% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
-        radial-gradient(520px 260px at 92% 0%, rgba(34,197,94,.10), transparent 60%);
+        radial-gradient(520px 220px at 10% 0%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 60%),
+        radial-gradient(520px 260px at 92% 0%, rgba(34,197,94,.12), transparent 60%),
+        radial-gradient(420px 220px at 50% 120%, rgba(99,102,241,.12), transparent 60%);
       opacity:.85;
       pointer-events:none;
     }
+
     .topbar{
       position:relative;
       display:flex;
@@ -166,13 +186,15 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
       gap:14px;
       padding:16px 18px 14px;
       border-bottom: 1px solid rgba(255,255,255,.08);
-      background: rgba(0,0,0,.10);
+      background: rgba(0,0,0,.12);
     }
+
     .dots{
       display:flex;
       gap:7px;
       align-items:center;
       margin-right:2px;
+      filter: drop-shadow(0 10px 25px rgba(0,0,0,.35));
     }
     .dot{
       width:11px; height:11px;
@@ -183,6 +205,7 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
     .dot.red{ background:#ff5f57; }
     .dot.yellow{ background:#febc2e; }
     .dot.green{ background:#28c840; }
+
     .icon{
       width:64px;
       height:64px;
@@ -190,10 +213,18 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
       overflow:hidden;
       border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.06);
-      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      box-shadow: 0 18px 70px rgba(0,0,0,.55);
       flex:0 0 auto;
       display:grid;
       place-items:center;
+      position:relative;
+    }
+    .icon::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(120px 90px at 20% 10%, rgba(255,255,255,.12), transparent 55%);
+      pointer-events:none;
     }
     .icon img{ width:100%; height:100%; object-fit:cover; display:block; }
     .fallbackIcon{
@@ -202,10 +233,12 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
       background: rgba(255,255,255,.10);
       box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset;
     }
+
     .head{
       min-width:0;
       flex:1 1 auto;
     }
+
     h1{
       margin:0;
       font-size:22px;
@@ -213,6 +246,7 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
       letter-spacing:.2px;
       line-height:1.15;
     }
+
     .sub{
       margin:8px 0 0 0;
       font-size:14px;
@@ -220,43 +254,83 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
       line-height:1.45;
       max-width: 62ch;
     }
+
+    /* ONE ticker line */
     .ticker{
       position:relative;
-      padding:14px 0 18px;
+      padding:14px 0 16px;
     }
     .tickerRow{
       overflow:hidden;
       border-top: 1px solid rgba(255,255,255,.07);
       border-bottom: 1px solid rgba(255,255,255,.07);
-      background: rgba(0,0,0,.16);
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,.12) 40%, rgba(0,0,0,.35));
       padding:10px 0;
+      position:relative;
     }
-    .tickerRow + .tickerRow{ border-top:none; }
-    .tickerTrack{
-      display:inline-flex;
-      gap:18px;
-      white-space:nowrap;
-      padding-left:100%;
+    .tickerRow::before,
+    .tickerRow::after{
+      content:"";
+      position:absolute;
+      top:0; bottom:0;
+      width:90px;
+      pointer-events:none;
+    }
+    .tickerRow::before{
+      left:0;
+      background: linear-gradient(90deg, rgba(6,6,18,1), rgba(6,6,18,0));
+    }
+    .tickerRow::after{
+      right:0;
+      background: linear-gradient(270deg, rgba(6,6,18,1), rgba(6,6,18,0));
+    }
+
+    .tickerInner{
+      display:flex;
+      width:max-content;
       will-change: transform;
+      animation: marquee 16s linear infinite;
     }
+    .tickerChunk{
+      display:inline-flex;
+      gap:14px;
+      padding:0 12px;
+      white-space:nowrap;
+    }
+
     .tickItem{
       font-size:12px;
-      letter-spacing:.35px;
+      letter-spacing:.38px;
       text-transform:uppercase;
-      color: rgba(255,255,255,.78);
-      padding:4px 10px;
+      color: rgba(255,255,255,.80);
+      padding:5px 10px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.05);
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.14);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      box-shadow: 0 14px 38px rgba(0,0,0,.30);
+      position:relative;
     }
-    .r1 .tickerTrack{ animation: scroll 14s linear infinite; }
-    .r2 .tickerTrack{ animation: scroll 18s linear infinite reverse; opacity:.95; }
-    .r3 .tickerTrack{ animation: scroll 22s linear infinite; opacity:.9; }
-    @keyframes scroll{
+    .tickItem::after{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius:999px;
+      pointer-events:none;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
+      opacity:.8;
+    }
+
+    @keyframes marquee{
       0%{ transform: translateX(0); }
-      100%{ transform: translateX(-100%); }
+      100%{ transform: translateX(-50%); }
     }
+
+    @media (prefers-reduced-motion: reduce){
+      .tickerInner{ animation:none; }
+    }
+
     .glitch{
       position:relative;
       display:inline-block;
@@ -277,7 +351,7 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
     }
     .glitch::after{
       transform: translate(-1px, 0);
-      color: rgba(99,102,241,.9);
+      color: rgba(99,102,241,.92);
       clip-path: inset(55% 0 0 0);
       animation: g2 3.1s infinite linear;
     }
@@ -289,6 +363,7 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
       0%,100%{ clip-path: inset(58% 0 0 0); }
       50%{ clip-path: inset(40% 0 0 0); }
     }
+
     .pad{
       position:relative;
       padding:18px;
@@ -321,9 +396,12 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
     </header>
 
     <section class="ticker" aria-hidden="true">
-      <div class="tickerRow r1">${mkRow(t1)}</div>
-      <div class="tickerRow r2">${mkRow(t2)}</div>
-      <div class="tickerRow r3">${mkRow(t3)}</div>
+      <div class="tickerRow">
+        <div class="tickerInner">
+          <div class="tickerChunk">${tickerItemHtml}</div>
+          <div class="tickerChunk" aria-hidden="true">${tickerItemHtml}</div>
+        </div>
+      </div>
     </section>
 
     <div class="pad">
@@ -345,23 +423,6 @@ function buildCardPage({ title, subtitle, accent = '#fb7185', iconUrl, tickerLin
   </script>
 </body>
 </html>`;
-}
-
-function buildExistsPage() {
-  return buildCardPage({
-    title: 'Endpoint online',
-    subtitle: 'Nothing to see here.',
-    accent: '#60a5fa',
-    iconUrl: 'https://i.postimg.cc/Jzm7phVG/image.png',
-    tickerLines: [
-      'go build something',
-      'stop refreshing',
-      'this page is boring on purpose',
-      'youre still here?',
-      'learn to code',
-      'try the lua client instead',
-    ],
-  });
 }
 
 function buildNotFoundPage() {
@@ -424,7 +485,6 @@ module.exports = async (req, res) => {
   const params = req?.params || {};
   const nameInput = query.name ?? params.name ?? '';
   const scriptName = sanitizeName(nameInput);
-  const wantRaw = String(query.raw ?? '') === '1';
   const method = String(req?.method || 'GET').toUpperCase();
 
   if (method !== 'GET') {
@@ -439,39 +499,38 @@ module.exports = async (req, res) => {
     return;
   }
 
+  // IMPORTANT:
+  // Raw is now the default: /api/script/<name> serves the script to non-browser clients.
+  // Browser-like requests get the troll page. Query raw=1 is no longer needed (but we ignore it).
   const filePath = await findScriptFile(scriptName);
 
-  if (!wantRaw) {
-    applyHtmlHeaders(res);
-    res.setHeader('Cache-Control', 'no-store');
-    if (!filePath) {
+  // Vary still useful because we serve HTML to browsers and raw to clients
+  res.setHeader('Vary', 'Accept, User-Agent, Sec-Fetch-Dest, Sec-Fetch-Mode');
+  res.setHeader('Cache-Control', 'no-store');
+
+  if (!filePath) {
+    if (isBrowserLikeRequest(req)) {
+      applyHtmlHeaders(res);
       respond(res, 404, 'text/html; charset=utf-8', buildNotFoundPage());
       return;
     }
-    respond(res, 200, 'text/html; charset=utf-8', buildExistsPage());
-    return;
-  }
-
-  res.setHeader('Vary', 'Accept, User-Agent, Sec-Fetch-Dest, Sec-Fetch-Mode');
-
-  if (!filePath) {
     applyCommonHeaders(res);
-    respond(res, 404, 'text/plain; charset=utf-8', 'Script not found', { 'Cache-Control': 'no-store' });
+    respond(res, 404, 'text/plain; charset=utf-8', 'Script not found');
     return;
   }
 
   if (isBrowserLikeRequest(req)) {
     applyHtmlHeaders(res);
-    respond(res, 200, 'text/html; charset=utf-8', buildRawBlockedPage(), { 'Cache-Control': 'no-store' });
+    respond(res, 200, 'text/html; charset=utf-8', buildRawBlockedPage());
     return;
   }
 
   try {
     const content = await fs.readFile(filePath, 'utf8');
     applyCommonHeaders(res);
-    respond(res, 200, 'text/plain; charset=utf-8', content, { 'Cache-Control': 'no-store' });
+    respond(res, 200, 'text/plain; charset=utf-8', content);
   } catch {
     applyCommonHeaders(res);
-    respond(res, 500, 'text/plain; charset=utf-8', 'Internal error', { 'Cache-Control': 'no-store' });
+    respond(res, 500, 'text/plain; charset=utf-8', 'Internal error');
   }
 };
