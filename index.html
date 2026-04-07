@@ -7,797 +7,1078 @@
 
   <style>
     :root{
-      --bg1:#050816;
-      --bg2:#0b1230;
-      --card: rgba(10, 16, 38, .62);
+      --bg-1:#04050d;
+      --bg-2:#0a1025;
+      --bg-3:#111938;
+
+      --glass: rgba(10,14,30,.52);
+      --glass-2: rgba(14,20,42,.62);
       --stroke: rgba(255,255,255,.10);
-      --strokeHover: rgba(255,255,255,.85);
-      --text:#eaf0ff;
-      --muted:rgba(234,240,255,.70);
-      --shadow: 0 18px 70px rgba(0,0,0,.60);
-      --shadow2: 0 12px 35px rgba(0,0,0,.45);
-      --radius: 18px;
+      --stroke-strong: rgba(255,255,255,.22);
+      --text:#f2f5ff;
+      --muted:rgba(242,245,255,.68);
+
+      --pink:#ff73d2;
+      --violet:#8d5bff;
+      --blue:#6ea8ff;
+      --cyan:#67f2ff;
+
+      --shadow-lg: 0 35px 120px rgba(0,0,0,.58);
+      --shadow-md: 0 18px 50px rgba(0,0,0,.42);
+
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 18px;
     }
 
     *{ box-sizing:border-box; }
-    html, body{ height:100%; }
+    html,body{ height:100%; }
 
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:var(--text);
-      min-height:100vh;
       overflow-x:hidden;
+      min-height:100vh;
       background:
-        radial-gradient(1200px 600px at 20% 15%, rgba(77,120,255,.25), transparent 60%),
-        radial-gradient(900px 500px at 80% 20%, rgba(82,255,197,.14), transparent 55%),
-        radial-gradient(900px 600px at 60% 90%, rgba(255,143,77,.10), transparent 60%),
-        linear-gradient(160deg, var(--bg1), var(--bg2));
+        radial-gradient(1100px 700px at 15% 10%, rgba(141,91,255,.18), transparent 60%),
+        radial-gradient(900px 600px at 85% 16%, rgba(103,242,255,.10), transparent 55%),
+        radial-gradient(1000px 700px at 50% 100%, rgba(255,115,210,.08), transparent 60%),
+        linear-gradient(180deg, #03040a 0%, #070b18 35%, #0a1025 65%, #0d1530 100%);
+      position:relative;
+      isolation:isolate;
     }
 
     #StarsCanvas{
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-      opacity: .95;
-    }
-
-    .wrap{
-      position: relative;
-      z-index: 2;
-      width:min(860px, 92vw);
-      margin:0 auto;
-      padding: 28px 0 40px;
-    }
-
-    .card{
-      background: var(--card);
-      border: 1px solid var(--stroke);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      overflow:hidden;
-      position:relative;
-      transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease;
-    }
-
-    .card::before{
-      content:"";
-      position:absolute;
-      inset:-1px;
-      background:
-        radial-gradient(520px 240px at 18% 0%, rgba(140,180,255,.18), transparent 60%),
-        radial-gradient(520px 320px at 88% 0%, rgba(120,255,210,.12), transparent 55%);
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      z-index:0;
       pointer-events:none;
       opacity:.95;
     }
 
-    .card > .inner{
+    .bgGrid{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at center, rgba(0,0,0,.95), rgba(0,0,0,.15) 68%, transparent 100%);
+      opacity:.35;
+    }
+
+    .noise{
+      position:fixed;
+      inset:0;
+      z-index:1;
+      pointer-events:none;
+      opacity:.06;
+      mix-blend-mode:soft-light;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.45) 0 1px, transparent 1px),
+        radial-gradient(circle at 80% 30%, rgba(255,255,255,.45) 0 1px, transparent 1px),
+        radial-gradient(circle at 30% 80%, rgba(255,255,255,.45) 0 1px, transparent 1px),
+        radial-gradient(circle at 70% 70%, rgba(255,255,255,.45) 0 1px, transparent 1px);
+      background-size: 140px 140px, 170px 170px, 180px 180px, 210px 210px;
+      animation: noiseFloat 16s linear infinite;
+    }
+
+    @keyframes noiseFloat{
+      from{ transform:translate3d(0,0,0); }
+      to{ transform:translate3d(-40px,30px,0); }
+    }
+
+    .orb{
+      position:fixed;
+      border-radius:999px;
+      filter: blur(16px);
+      pointer-events:none;
+      z-index:1;
+      opacity:.8;
+      animation: orbFloat 10s ease-in-out infinite;
+    }
+
+    .orb.one{
+      width:280px;
+      height:280px;
+      left:-70px;
+      top:12vh;
+      background:radial-gradient(circle, rgba(141,91,255,.30), rgba(141,91,255,0) 70%);
+      animation-duration: 11s;
+    }
+
+    .orb.two{
+      width:260px;
+      height:260px;
+      right:-60px;
+      top:18vh;
+      background:radial-gradient(circle, rgba(103,242,255,.18), rgba(103,242,255,0) 72%);
+      animation-duration: 13s;
+      animation-delay: -2s;
+    }
+
+    .orb.three{
+      width:340px;
+      height:340px;
+      left:50%;
+      bottom:-120px;
+      transform:translateX(-50%);
+      background:radial-gradient(circle, rgba(255,115,210,.16), rgba(255,115,210,0) 75%);
+      animation-duration: 14s;
+      animation-delay: -5s;
+    }
+
+    @keyframes orbFloat{
+      0%,100%{ transform:translate3d(0,0,0) scale(1); }
+      50%{ transform:translate3d(0,-16px,0) scale(1.04); }
+    }
+
+    .page{
       position:relative;
-      padding: 16px;
-    }
-
-    .hoverGlow:hover{
-      border-color: var(--strokeHover);
-      box-shadow: 0 18px 70px rgba(0,0,0,.60), 0 0 0 1px rgba(255,255,255,.25) inset;
-      transform: translateY(-1px);
-    }
-
-    .pillRow{
+      z-index:2;
+      min-height:100vh;
       display:flex;
-      gap:10px;
-      flex-wrap:wrap;
       align-items:center;
-      margin-top:10px;
+      justify-content:center;
+      padding:42px 18px;
     }
 
-    .pill{
+    .shell{
+      width:min(980px, 100%);
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:18px;
+      perspective: 1600px;
+    }
+
+    @media (max-width: 900px){
+      .shell{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel{
+      position:relative;
+      overflow:hidden;
+      border-radius: var(--radius-xl);
+      border:1px solid var(--stroke);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)),
+        var(--glass);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      box-shadow: var(--shadow-lg);
+      transform-style: preserve-3d;
+      transition: transform .18s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+
+    .panel:hover{
+      border-color: rgba(255,255,255,.18);
+      box-shadow:
+        0 35px 120px rgba(0,0,0,.58),
+        0 0 0 1px rgba(255,255,255,.05) inset,
+        0 0 80px rgba(141,91,255,.08);
+    }
+
+    .panel::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      pointer-events:none;
+      background:
+        radial-gradient(500px 180px at 0% 0%, rgba(141,91,255,.18), transparent 60%),
+        radial-gradient(380px 220px at 100% 0%, rgba(103,242,255,.12), transparent 60%),
+        radial-gradient(600px 280px at 50% 120%, rgba(255,115,210,.08), transparent 70%);
+      opacity:.95;
+    }
+
+    .panel::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(130deg, rgba(255,255,255,.08), transparent 18%, transparent 78%, rgba(255,255,255,.04));
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.95), rgba(0,0,0,.6));
+      opacity:.65;
+    }
+
+    .mainCard{
+      min-height: 620px;
+    }
+
+    .sideCard{
+      min-height: 620px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)),
+        var(--glass-2);
+    }
+
+    .inner{
+      position:relative;
+      z-index:2;
+      padding:24px;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    .topGlow{
+      position:absolute;
+      inset:auto 20px 0 auto;
+      width:180px;
+      height:180px;
+      border-radius:999px;
+      background: radial-gradient(circle, rgba(141,91,255,.22), rgba(141,91,255,0) 72%);
+      filter: blur(22px);
+      pointer-events:none;
+      z-index:1;
+    }
+
+    .hero{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      padding:8px 2px 2px;
+    }
+
+    .avatarWrap{
+      position:relative;
+      flex:0 0 auto;
+    }
+
+    .avatarRing{
+      position:absolute;
+      inset:-7px;
+      border-radius:999px;
+      background:
+        conic-gradient(from 0deg, rgba(141,91,255,.0), rgba(141,91,255,.9), rgba(103,242,255,.9), rgba(255,115,210,.85), rgba(141,91,255,.0));
+      filter: blur(.2px);
+      opacity:.95;
+      animation: spin 6.5s linear infinite;
+    }
+
+    .avatarRing::after{
+      content:"";
+      position:absolute;
+      inset:5px;
+      border-radius:999px;
+      background: rgba(6,10,24,.95);
+    }
+
+    @keyframes spin{
+      to{ transform:rotate(360deg); }
+    }
+
+    .avatar{
+      position:relative;
+      z-index:2;
+      width:94px;
+      height:94px;
+      border-radius:999px;
+      object-fit:cover;
+      display:block;
+      background: rgba(255,255,255,.06);
+      border: 2px solid rgba(255,255,255,.12);
+      box-shadow: 0 16px 35px rgba(0,0,0,.32);
+      cursor:pointer;
+      transition: transform .22s ease, filter .22s ease, border-color .22s ease;
+    }
+
+    .avatar:hover{
+      transform: scale(1.03) translateY(-1px);
+      border-color: rgba(255,255,255,.30);
+      filter: brightness(1.04);
+    }
+
+    .identity{
+      min-width:0;
+      flex:1;
+    }
+
+    .eyebrow{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.05);
-      color: rgba(234,240,255,.78);
-      font-size: 13px;
-      box-shadow: 0 10px 28px rgba(0,0,0,.18);
-      transition: border-color .22s ease, background .22s ease;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color:rgba(242,245,255,.76);
+      font-size:12px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      margin-bottom:12px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
     }
 
-    .dot{
+    .eyebrowDot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background: linear-gradient(135deg, var(--pink), var(--violet));
+      box-shadow: 0 0 16px rgba(141,91,255,.55);
+    }
+
+    #username{
+      margin:0;
+      font-size: clamp(26px, 3vw, 42px);
+      font-weight: 1000;
+      line-height: 1;
+      letter-spacing: -.03em;
+      background:
+        linear-gradient(135deg, #ffffff 0%, #e8ddff 32%, #8d5bff 68%, #67f2ff 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      color:transparent;
+      text-shadow: 0 0 28px rgba(141,91,255,.16);
+    }
+
+    .subtext{
+      margin:10px 0 0;
+      color:var(--muted);
+      font-size:14px;
+      max-width:520px;
+      line-height:1.55;
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:4px;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:9px;
+      padding:11px 14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color:rgba(242,245,255,.88);
+      font-size:13px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.16);
+      transition: transform .18s ease, border-color .22s ease, background .22s ease;
+      user-select:none;
+    }
+
+    .chip:hover{
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.22);
+      background: rgba(255,255,255,.06);
+    }
+
+    .statusDot{
       width:10px;
       height:10px;
       border-radius:999px;
       background:#808191;
       box-shadow: 0 0 0 4px rgba(128,129,145,.12);
+      flex:0 0 auto;
     }
 
-    .profile{
+    .section{
       display:flex;
-      align-items:center;
-      gap:14px;
-    }
-
-    .avatar{
-      width:72px;
-      height:72px;
-      border-radius: 999px;
-      border: 2px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06);
-      object-fit: cover;
-      box-shadow: var(--shadow2);
-      cursor:pointer;
-      transition: transform .18s ease, border-color .22s ease;
-    }
-
-    .avatar:hover{
-      transform: translateY(-1px);
-      border-color: rgba(255,255,255,.32);
-    }
-
-    #username{
-      margin:0;
-      font-size: 20px;
-      font-weight: 950;
-      letter-spacing:.2px;
-      background:linear-gradient(135deg,#fff 0%,#888 50%,#fff 100%);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
-      background-clip:text;
-      color: transparent;
+      flex-direction:column;
+      gap:12px;
     }
 
     .sectionTitle{
-      margin: 14px 0 8px;
-      font-size: 12px;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      color: rgba(234,240,255,.60);
       display:flex;
       align-items:center;
-      justify-content: space-between;
-      gap: 10px;
+      justify-content:space-between;
+      gap:10px;
+      margin:0;
+      color:rgba(242,245,255,.58);
+      text-transform:uppercase;
+      letter-spacing:.18em;
+      font-size:12px;
+      font-weight:800;
     }
 
-    .rowCard{
+    .sectionLine{
+      flex:1;
+      height:1px;
+      background: linear-gradient(90deg, rgba(255,255,255,.14), transparent);
+    }
+
+    .activityCard{
+      position:relative;
       display:flex;
-      gap:12px;
       align-items:center;
-      padding: 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      transition: border-color .22s ease, background .22s ease, transform .22s ease;
+      gap:14px;
+      padding:16px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.10);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.025));
+      box-shadow: var(--shadow-md);
+      overflow:hidden;
+      transition: transform .22s ease, border-color .22s ease, background .22s ease;
     }
 
-    .rowCard:hover{
-      border-color: rgba(255,255,255,.60);
-      background: rgba(255,255,255,.06);
+    .activityCard:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.22);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    }
+
+    .activityCard::before{
+      content:"";
+      position:absolute;
+      right:-30px;
+      top:-30px;
+      width:160px;
+      height:160px;
+      border-radius:999px;
+      background: radial-gradient(circle, rgba(141,91,255,.14), rgba(141,91,255,0) 70%);
+      pointer-events:none;
     }
 
     .iconBox{
-      width: 54px;
-      height: 54px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(6,10,25,.55);
+      width:72px;
+      height:72px;
+      border-radius:20px;
+      flex:0 0 auto;
       display:grid;
       place-items:center;
-      box-shadow: 0 10px 28px rgba(0,0,0,.25);
-      flex: 0 0 auto;
       overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)),
+        rgba(6,10,24,.68);
+      box-shadow: 0 14px 28px rgba(0,0,0,.28);
     }
 
-    .iconBox svg{ width: 28px; height: 28px; }
-    .iconBox img{ width:100%; height:100%; object-fit:cover; border-radius: 16px; }
-
-    .rowMain{
-      min-width:0;
-      flex:1 1 auto;
+    .iconBox svg{
+      width:34px;
+      height:34px;
+      opacity:.95;
     }
 
-    .rowMain .title{
-      margin:0;
-      font-weight: 950;
-      letter-spacing:.2px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .rowMain .desc{
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .sourceOnly{
-      margin-top: 12px;
-      color: rgba(234,240,255,.55);
-      font-size: 12px;
-      display:none;
-    }
-
-    .spotifyProgress{
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      display:none;
-      transition: border-color .22s ease;
-    }
-
-    .spotifyProgress:hover{
-      border-color: rgba(255,255,255,.50);
-    }
-
-    .bar{
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.10);
-      overflow:hidden;
-    }
-
-    .bar > span{
-      display:block;
-      height:100%;
-      width:0%;
-      background: rgba(255,255,255,.60);
-      border-radius: 999px;
-    }
-
-    .timeRow{
-      margin-top: 8px;
-      display:flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: rgba(234,240,255,.75);
-    }
-
-    .projectsCard{ margin-top: 14px; }
-
-    .projectsHeader{
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .projectsTitle{
-      margin:0;
-      font-size: 12px;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      color: rgba(234,240,255,.60);
-    }
-
-    .navBtns{
-      display:flex;
-      gap:8px;
-      align-items:center;
-    }
-
-    .navBtn{
-      width: 34px;
-      height: 34px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.05);
-      color: rgba(234,240,255,.90);
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-      user-select:none;
-      transition: border-color .22s ease, background .22s ease, transform .18s ease;
-    }
-
-    .navBtn:hover{
-      border-color: rgba(255,255,255,.75);
-      background: rgba(255,255,255,.08);
-      transform: translateY(-1px);
-    }
-
-    .navBtn:disabled{
-      opacity:.35;
-      cursor: not-allowed;
-      transform:none;
-    }
-
-    .carousel{
-      overflow:hidden;
-      position:relative;
-    }
-
-    .carouselTrack{
-      display:flex;
-      width: 200%;
-      transform: translateX(0%);
-      transition: transform .38s cubic-bezier(.2,.9,.2,1);
-    }
-
-    .projectSlide{
-      width: 50%;
-      padding: 0;
-    }
-
-    .projectRow{
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-      padding: 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      transition: border-color .22s ease, background .22s ease, transform .22s ease;
-      position:relative;
-    }
-
-    .projectRow:hover{
-      border-color: rgba(255,255,255,.85);
-      background: rgba(255,255,255,.06);
-      transform: translateY(-1px);
-    }
-
-    .projectIcon{
-      width: 62px;
-      height: 62px;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.12);
-      overflow:hidden;
-      background: rgba(6,10,25,.55);
-      box-shadow: 0 10px 28px rgba(0,0,0,.25);
-      flex: 0 0 auto;
-    }
-
-    .projectIcon img{
+    .iconBox img{
       width:100%;
       height:100%;
       object-fit:cover;
       display:block;
     }
 
-    .projectMain{
+    .activityMain{
       min-width:0;
-      flex:1 1 auto;
+      flex:1;
     }
 
-    .projectTop{
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .projectName{
+    .activityTitle{
       margin:0;
-      font-size: 18px;
-      font-weight: 950;
-      letter-spacing:.2px;
+      font-size:19px;
+      font-weight:900;
+      letter-spacing:-.02em;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
     }
 
-    .badge{
-      font-size: 12px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: rgba(234,240,255,.88);
-      flex: 0 0 auto;
+    .activityDesc{
+      margin:7px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
-    .projectDesc{
-      margin: 8px 0 12px;
-      color: rgba(234,240,255,.72);
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .tagRow{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
-    .tag{
-      font-size: 12px;
-      padding: 6px 10px;
-      border-radius: 999px;
+    .spotifyWrap{
+      display:none;
+      margin-top:12px;
+      padding:14px;
+      border-radius:18px;
       border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.04);
-      color: rgba(234,240,255,.78);
+      transition: border-color .22s ease, background .22s ease;
     }
 
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color: rgba(234,240,255,.92);
-      cursor:pointer;
-      transition: border-color .22s ease, background .22s ease, transform .18s ease;
-      user-select:none;
-      text-decoration:none;
-      font-weight: 750;
-      font-size: 13px;
+    .spotifyWrap:hover{
+      border-color: rgba(255,255,255,.18);
+      background: rgba(255,255,255,.05);
     }
 
-    .btn:hover{
-      border-color: rgba(255,255,255,.85);
-      background: rgba(255,255,255,.10);
-      transform: translateY(-1px);
-    }
-
-    .btn:active{
-      transform: translateY(0px) scale(.99);
-    }
-
-    .overlay{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.0);
-      backdrop-filter: blur(0px);
-      -webkit-backdrop-filter: blur(0px);
-      display:none;
-      z-index: 9998;
-      transition: background .26s ease, backdrop-filter .26s ease;
-    }
-
-    .overlay.show{
-      display:block;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .modal{
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%,-50%) scale(.98);
-      width: min(920px, 92vw);
-      max-height: min(78vh, 700px);
+    .bar{
+      position:relative;
+      height:10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.08);
       overflow:hidden;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(10, 16, 38, .72);
-      box-shadow: 0 28px 90px rgba(0,0,0,.70);
-      z-index: 9999;
-      opacity:0;
-      pointer-events:none;
-      transition: opacity .26s ease, transform .26s cubic-bezier(.2,.9,.2,1);
-      transform-origin: var(--ox, 50%) var(--oy, 50%);
     }
 
-    .modal.show{
-      opacity:1;
-      pointer-events:auto;
-      transform: translate(-50%,-50%) scale(1);
-    }
-
-    .modal::before{
+    .bar::before{
       content:"";
       position:absolute;
-      inset:-1px;
+      inset:0;
       background:
-        radial-gradient(620px 260px at 20% 0%, rgba(140,180,255,.16), transparent 60%),
-        radial-gradient(520px 340px at 90% 0%, rgba(120,255,210,.10), transparent 55%);
-      opacity:.95;
+        linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,0));
       pointer-events:none;
     }
 
-    .modalInner{
+    .bar > span{
+      display:block;
+      width:0%;
+      height:100%;
+      border-radius:999px;
+      background: linear-gradient(90deg, var(--pink), var(--violet), var(--blue), var(--cyan));
+      box-shadow: 0 0 18px rgba(141,91,255,.45);
+    }
+
+    .timeRow{
+      margin-top:9px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color:rgba(242,245,255,.78);
+      font-size:12px;
+    }
+
+    .statsGrid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:12px;
+    }
+
+    .stat{
       position:relative;
-      padding: 14px;
+      padding:16px;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      overflow:hidden;
+      transition: transform .2s ease, border-color .22s ease, background .22s ease;
+    }
+
+    .stat:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.22);
+      background: rgba(255,255,255,.05);
+    }
+
+    .stat::before{
+      content:"";
+      position:absolute;
+      inset:auto auto -40px -40px;
+      width:120px;
+      height:120px;
+      border-radius:999px;
+      background: radial-gradient(circle, rgba(141,91,255,.14), transparent 70%);
+      pointer-events:none;
+    }
+
+    .statLabel{
+      margin:0 0 8px;
+      color:rgba(242,245,255,.58);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.15em;
+      font-weight:800;
+    }
+
+    .statValue{
+      margin:0;
+      font-size:26px;
+      font-weight:1000;
+      letter-spacing:-.03em;
+    }
+
+    .statSub{
+      margin:7px 0 0;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .bigPanel{
       display:flex;
       flex-direction:column;
-      gap: 12px;
-      height: 100%;
+      justify-content:space-between;
+      gap:18px;
+      min-height:100%;
     }
 
-    .modalTop{
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .modalTitle{
-      margin:0;
-      font-size: 14px;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      color: rgba(234,240,255,.72);
-    }
-
-    .closeBtn{
-      width: 38px;
-      height: 38px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.05);
-      color: rgba(234,240,255,.90);
-      cursor:pointer;
-      transition: border-color .22s ease, background .22s ease, transform .18s ease;
-    }
-
-    .closeBtn:hover{
-      border-color: rgba(255,255,255,.85);
-      background: rgba(255,255,255,.08);
-      transform: translateY(-1px);
-    }
-
-    .modalBody{
-      overflow:auto;
-      padding-right: 6px;
-    }
-
-    .scriptsGrid{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    @media (max-width: 860px){
-      .scriptsGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 520px){
-      .scriptsGrid{ grid-template-columns: 1fr; }
-    }
-
-    .scriptCard{
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      padding: 12px;
-      transition: border-color .22s ease, background .22s ease, transform .22s ease;
-    }
-
-    .scriptCard:hover{
-      border-color: rgba(255,255,255,.85);
-      background: rgba(255,255,255,.06);
-      transform: translateY(-1px);
-    }
-
-    .scriptTop{
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .scriptName{
-      margin:0;
-      font-weight: 950;
-      letter-spacing:.2px;
-      font-size: 14px;
-      white-space:nowrap;
+    .brandBlock{
+      position:relative;
+      min-height: 220px;
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.10);
+      background:
+        radial-gradient(380px 180px at 10% 0%, rgba(141,91,255,.16), transparent 60%),
+        radial-gradient(260px 180px at 100% 20%, rgba(103,242,255,.10), transparent 55%),
+        rgba(255,255,255,.04);
       overflow:hidden;
-      text-overflow:ellipsis;
+      box-shadow: var(--shadow-md);
+      padding:20px;
     }
 
-    .scriptBadge{
-      font-size: 12px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: rgba(234,240,255,.86);
-      flex: 0 0 auto;
+    .brandLines{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      opacity:.35;
+      background:
+        linear-gradient(130deg, transparent 0 40%, rgba(255,255,255,.06) 45%, transparent 50%),
+        linear-gradient(160deg, transparent 0 55%, rgba(255,255,255,.04) 60%, transparent 65%);
+      animation: shineLines 10s linear infinite;
     }
 
-    .scriptText{
-      margin: 10px 0 12px;
-      font-size: 12px;
-      color: rgba(234,240,255,.72);
-      line-height: 1.45;
-      min-height: 44px;
+    @keyframes shineLines{
+      from{ transform:translateX(-8%); }
+      to{ transform:translateX(8%); }
     }
 
-    .scriptActions{
-      display:flex;
-      gap:10px;
+    .miniLabel{
+      display:inline-flex;
       align-items:center;
-      justify-content:flex-end;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color:rgba(242,245,255,.74);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      margin-bottom:14px;
     }
 
-    .copyBtn{
-      padding: 9px 10px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color: rgba(234,240,255,.92);
-      cursor:pointer;
-      transition: border-color .22s ease, background .22s ease, transform .18s ease;
-      font-weight: 800;
-      font-size: 12px;
+    .bigTitle{
+      margin:0;
+      font-size: clamp(28px, 3vw, 44px);
+      line-height:1;
+      letter-spacing:-.05em;
+      font-weight:1000;
+      max-width: 420px;
+      text-wrap:balance;
     }
 
-    .copyBtn:hover{
-      border-color: rgba(255,255,255,.85);
-      background: rgba(255,255,255,.10);
-      transform: translateY(-1px);
+    .bigTitle span{
+      background: linear-gradient(135deg, #fff 0%, #d9cfff 40%, #8d5bff 70%, #67f2ff 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      color:transparent;
+    }
+
+    .brandText{
+      margin:14px 0 0;
+      max-width: 440px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.65;
+    }
+
+    .shape{
+      position:absolute;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      box-shadow: 0 10px 30px rgba(0,0,0,.16);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      animation: drift 9s ease-in-out infinite;
+    }
+
+    .shape.s1{
+      right:28px;
+      top:26px;
+      width:82px;
+      height:82px;
+      border-radius:24px;
+      transform: rotate(20deg);
+      animation-duration: 10s;
+    }
+
+    .shape.s2{
+      right:88px;
+      bottom:30px;
+      width:64px;
+      height:64px;
+      border-radius:999px;
+      animation-duration: 8s;
+      animation-delay: -2s;
+    }
+
+    .shape.s3{
+      right:20px;
+      bottom:90px;
+      width:38px;
+      height:38px;
+      border-radius:14px;
+      transform: rotate(-16deg);
+      animation-duration: 7s;
+      animation-delay: -1s;
+    }
+
+    @keyframes drift{
+      0%,100%{ transform:translateY(0) rotate(0deg); }
+      50%{ transform:translateY(-10px) rotate(8deg); }
+    }
+
+    .stack{
+      display:grid;
+      gap:12px;
+    }
+
+    .infoCard{
+      padding:16px;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      transition: transform .2s ease, border-color .22s ease, background .22s ease;
+    }
+
+    .infoCard:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.20);
+      background: rgba(255,255,255,.05);
+    }
+
+    .infoTop{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .smallIcon{
+      width:38px;
+      height:38px;
+      border-radius:13px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      flex:0 0 auto;
+    }
+
+    .smallIcon svg{
+      width:18px;
+      height:18px;
+    }
+
+    .infoTitle{
+      margin:0;
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.01em;
+    }
+
+    .infoText{
+      margin:0;
+      font-size:13px;
+      line-height:1.6;
+      color:var(--muted);
+    }
+
+    .footerBar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding-top:4px;
+      color:rgba(242,245,255,.52);
+      font-size:12px;
+      flex-wrap:wrap;
+    }
+
+    .footerPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
     }
 
     .toast{
-      position: fixed;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      padding: 10px 12px;
-      border-radius: 999px;
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      z-index:9999;
+      padding:12px 14px;
+      border-radius:999px;
       border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.45);
-      color: rgba(234,240,255,.92);
-      font-size: 13px;
-      box-shadow: 0 18px 60px rgba(0,0,0,.5);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(8,10,20,.72);
+      color:rgba(242,245,255,.94);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       opacity:0;
       pointer-events:none;
       transition: opacity .18s ease, transform .18s ease;
-      z-index: 10000;
+      font-size:13px;
     }
 
     .toast.show{
       opacity:1;
-      transform: translateX(-50%) translateY(-2px);
+      transform:translateX(-50%) translateY(-2px);
+    }
+
+    .floatBadge{
+      position:absolute;
+      right:18px;
+      bottom:18px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(12,16,32,.58);
+      color:rgba(242,245,255,.88);
+      font-size:12px;
+      box-shadow: 0 16px 36px rgba(0,0,0,.28);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .floatBadgeDot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background: linear-gradient(135deg, var(--pink), var(--violet));
+      box-shadow: 0 0 16px rgba(141,91,255,.45);
+    }
+
+    @media (max-width: 640px){
+      .hero{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .statsGrid{
+        grid-template-columns: 1fr;
+      }
+
+      .mainCard,
+      .sideCard{
+        min-height: auto;
+      }
+
+      .inner{
+        padding:18px;
+      }
+
+      .bigPanel{
+        gap:14px;
+      }
     }
   </style>
 </head>
-
 <body>
   <canvas id="StarsCanvas"></canvas>
+  <div class="bgGrid"></div>
+  <div class="noise"></div>
 
-  <div class="wrap">
-    <div class="card hoverGlow">
-      <div class="inner">
-        <div class="profile">
-          <img id="avatar" class="avatar" alt="avatar" title="Click to copy username" />
-          <div>
-            <p id="username">Connecting…</p>
+  <div class="orb one"></div>
+  <div class="orb two"></div>
+  <div class="orb three"></div>
 
-            <div class="pillRow">
-              <span class="pill">
-                <span class="dot" id="statusDot"></span>
-                <span id="statusText">—</span>
-              </span>
+  <div class="page">
+    <div class="shell" id="tiltShell">
+      <section class="panel mainCard" id="mainCard">
+        <div class="topGlow"></div>
 
-              <span class="pill" title="Click to toggle exact number">
-                Views: <span id="ViewCount">—</span>
-              </span>
+        <div class="inner">
+          <div class="hero">
+            <div class="avatarWrap">
+              <div class="avatarRing"></div>
+              <img id="avatar" class="avatar" alt="avatar" title="Click to copy username" />
             </div>
-          </div>
-        </div>
 
-        <div class="sectionTitle">Activity</div>
-
-        <div class="rowCard">
-          <div class="iconBox" id="activityIconBox" aria-hidden="true"></div>
-          <div class="rowMain">
-            <p class="title" id="activityTitle">—</p>
-            <p class="desc" id="activityDesc">—</p>
-          </div>
-        </div>
-
-        <div class="spotifyProgress" id="spotifyProgress">
-          <div class="bar"><span id="spotifyBar"></span></div>
-          <div class="timeRow">
-            <span id="spotifyNow">0:00</span>
-            <span id="spotifyTotal">0:00</span>
-          </div>
-        </div>
-
-        <!-- Source line removed -->
-        <div class="sourceOnly" id="sourceLine"></div>
-      </div>
-    </div>
-
-    <div class="card hoverGlow projectsCard">
-      <div class="inner">
-        <div class="projectsHeader">
-          <p class="projectsTitle">Projects</p>
-
-          <div class="navBtns">
-            <button class="navBtn" id="prevProject" title="Previous" aria-label="Previous project">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M15 6 9 12l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-
-            <button class="navBtn" id="nextProject" title="Next" aria-label="Next project">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="carousel" aria-label="Projects carousel">
-          <div class="carouselTrack" id="projectTrack">
-            <div class="projectSlide">
-              <div class="projectRow">
-                <div class="projectIcon" aria-hidden="true">
-                  <img src="https://i.postimg.cc/mrx7BrGq/image.png" alt="" />
-                </div>
-
-                <div class="projectMain">
-                  <div class="projectTop">
-                    <p class="projectName">Roblox scripts</p>
-                    <span class="badge">In Development</span>
-                  </div>
-
-                  <p class="projectDesc">Roblox scripts developed to improve your experience.</p>
-
-                  <div class="tagRow">
-                    <span class="tag">Lua</span>
-                    <button class="btn" id="viewScriptsBtn">View scripts</button>
-                  </div>
-                </div>
+            <div class="identity">
+              <div class="eyebrow">
+                <span class="eyebrowDot"></span>
+                <span>Live Presence</span>
               </div>
+
+              <h1 id="username">Connecting...</h1>
+              <p class="subtext">
+                A sleek real-time profile card with animated visuals, Discord presence tracking, ambient motion and a more premium dark glass style.
+              </p>
+            </div>
+          </div>
+
+          <div class="chips">
+            <div class="chip">
+              <span class="statusDot" id="statusDot"></span>
+              <span id="statusText">—</span>
             </div>
 
-            <div class="projectSlide">
-              <div class="projectRow">
-                <div class="projectIcon" aria-hidden="true">
-                  <img src="https://i.postimg.cc/26g1Fc8X/image.png" alt="" />
-                </div>
+            <div class="chip" title="Click to toggle exact number">
+              <span>Views</span>
+              <strong id="ViewCount">—</strong>
+            </div>
 
-                <div class="projectMain">
-                  <div class="projectTop">
-                    <p class="projectName">DarkSon Obfuscator</p>
-                    <span class="badge">In Development</span>
-                  </div>
+            <div class="chip">
+              <span>Discord ID</span>
+              <strong>1269246774103769121</strong>
+            </div>
+          </div>
 
-                  <p class="projectDesc">A tool which will allows you to safely obfuscate your lua files.</p>
+          <div class="section">
+            <p class="sectionTitle">
+              <span>Current Activity</span>
+              <span class="sectionLine"></span>
+            </p>
 
-                  <div class="tagRow">
-                    <span class="tag">Lua</span>
-                    <span class="tag">In Development</span>
+            <div class="activityCard">
+              <div class="iconBox" id="activityIconBox" aria-hidden="true"></div>
+
+              <div class="activityMain">
+                <p class="activityTitle" id="activityTitle">—</p>
+                <p class="activityDesc" id="activityDesc">—</p>
+
+                <div class="spotifyWrap" id="spotifyProgress">
+                  <div class="bar"><span id="spotifyBar"></span></div>
+                  <div class="timeRow">
+                    <span id="spotifyNow">0:00</span>
+                    <span id="spotifyTotal">0:00</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <div class="section">
+            <p class="sectionTitle">
+              <span>Overview</span>
+              <span class="sectionLine"></span>
+            </p>
+
+            <div class="statsGrid">
+              <div class="stat">
+                <p class="statLabel">Presence</p>
+                <p class="statValue" id="presenceStatusBig">—</p>
+                <p class="statSub">Live status synced from Discord.</p>
+              </div>
+
+              <div class="stat">
+                <p class="statLabel">Activity Source</p>
+                <p class="statValue" id="activitySourceBig">Idle</p>
+                <p class="statSub">Shows Spotify or current rich presence.</p>
+              </div>
+
+              <div class="stat">
+                <p class="statLabel">Connection</p>
+                <p class="statValue" id="socketState">Live</p>
+                <p class="statSub">Auto reconnect, heartbeat and stale watchdog enabled.</p>
+              </div>
+
+              <div class="stat">
+                <p class="statLabel">Visual Mode</p>
+                <p class="statValue">Nova</p>
+                <p class="statSub">Animated stars, floating shapes and glassmorphism.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="footerBar">
+            <span class="footerPill">
+              <span class="floatBadgeDot"></span>
+              <span>Click the avatar to copy the username</span>
+            </span>
+
+            <span class="footerPill">DarkSon interface • premium glass theme</span>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
+      </section>
 
-  <div class="overlay" id="overlay"></div>
+      <aside class="panel sideCard" id="sideCard">
+        <div class="inner bigPanel">
+          <div class="brandBlock">
+            <div class="brandLines"></div>
 
-  <div class="modal" id="scriptsModal" role="dialog" aria-modal="true" aria-label="Roblox scripts">
-    <div class="modalInner">
-      <div class="modalTop">
-        <p class="modalTitle">Roblox scripts</p>
-        <button class="closeBtn" id="closeModal" aria-label="Close">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
+            <div class="miniLabel">
+              <span class="eyebrowDot"></span>
+              <span>DarkSon</span>
+            </div>
 
-      <div class="modalBody">
-        <div class="scriptsGrid" id="scriptsGrid"></div>
-      </div>
+            <h2 class="bigTitle">
+              A cleaner and more <span>futuristic</span> profile experience.
+            </h2>
+
+            <p class="brandText">
+              This redesigned layout focuses on stronger depth, smoother transparency, more elegant spacing, richer lighting and a much more premium visual identity than the previous version.
+            </p>
+
+            <div class="shape s1"></div>
+            <div class="shape s2"></div>
+            <div class="shape s3"></div>
+
+            <div class="floatBadge">
+              <span class="floatBadgeDot"></span>
+              <span>Animated interface</span>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="infoCard">
+              <div class="infoTop">
+                <div class="smallIcon">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <p class="infoTitle">Visual Depth</p>
+              </div>
+              <p class="infoText">
+                Soft glow layers, animated orbs, atmospheric stars, background grid and floating geometry create a more advanced and immersive look.
+              </p>
+            </div>
+
+            <div class="infoCard">
+              <div class="infoTop">
+                <div class="smallIcon">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 7h16M7 12h10M9 17h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <p class="infoTitle">Cleaner Layout</p>
+              </div>
+              <p class="infoText">
+                The old projects block is fully removed to keep the experience centered on your identity, presence, current activity and visual branding.
+              </p>
+            </div>
+
+            <div class="infoCard">
+              <div class="infoTop">
+                <div class="smallIcon">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </div>
+                <p class="infoTitle">Smoother Motion</p>
+              </div>
+              <p class="infoText">
+                Cards respond slightly to mouse movement, floating elements animate softly, and the whole page feels more alive without being overloaded.
+              </p>
+            </div>
+          </div>
+
+          <div class="footerBar">
+            <span class="footerPill">Realtime presence tracking</span>
+            <span class="footerPill">Glass UI + ambient motion</span>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 
@@ -813,7 +1094,8 @@
       setTimeout(() => toastEl.classList.remove("show"), 1100);
     };
 
-    const USER_ID = "1204110245694144583";
+    const USER_ID = "1269246774103769121";
+    const LANYARD_REST = `https://api.lanyard.rest/v1/users/${USER_ID}`;
 
     const els = {
       avatar: document.getElementById("avatar"),
@@ -823,21 +1105,28 @@
       activityIconBox: document.getElementById("activityIconBox"),
       activityTitle: document.getElementById("activityTitle"),
       activityDesc: document.getElementById("activityDesc"),
-      sourceLine: document.getElementById("sourceLine"),
       spotifyProgress: document.getElementById("spotifyProgress"),
       spotifyBar: document.getElementById("spotifyBar"),
       spotifyNow: document.getElementById("spotifyNow"),
       spotifyTotal: document.getElementById("spotifyTotal"),
+      presenceStatusBig: document.getElementById("presenceStatusBig"),
+      activitySourceBig: document.getElementById("activitySourceBig"),
+      socketState: document.getElementById("socketState"),
     };
 
     const statusColor = (s) => {
       switch (s) {
-        case "online": return ["#3ad37a", "rgba(58,211,122,.18)"];
-        case "idle":   return ["#f2c94c", "rgba(242,201,76,.18)"];
-        case "dnd":    return ["#eb5757", "rgba(235,87,87,.18)"];
-        case "offline":return ["#808191", "rgba(128,129,145,.14)"];
-        default:       return ["#808191", "rgba(128,129,145,.14)"];
+        case "online": return ["#3ad37a", "rgba(58,211,122,.20)"];
+        case "idle":   return ["#f2c94c", "rgba(242,201,76,.20)"];
+        case "dnd":    return ["#eb5757", "rgba(235,87,87,.20)"];
+        case "offline":return ["#808191", "rgba(128,129,145,.16)"];
+        default:       return ["#808191", "rgba(128,129,145,.16)"];
       }
+    };
+
+    const prettyStatus = (s) => {
+      if (!s) return "Offline";
+      return s.charAt(0).toUpperCase() + s.slice(1);
     };
 
     const avatarUrl = (discord_user) => {
@@ -850,7 +1139,7 @@
       }
 
       const disc = Number(discriminator || 0);
-      const index = (disc % 5);
+      const index = disc % 5;
       return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
     };
 
@@ -861,9 +1150,9 @@
         return `
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" stroke="currentColor" stroke-width="2"/>
-            <path d="M7 10.3c3.9-1.2 7.6-.9 11 .8" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".9"/>
-            <path d="M7.7 13.2c3.3-1 6.4-.7 9.3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".8"/>
-            <path d="M8.5 16c2.7-.7 5.1-.5 7.3.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+            <path d="M7 10.3c3.9-1.2 7.6-.9 11 .8" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".95"/>
+            <path d="M7.7 13.2c3.3-1 6.4-.7 9.3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".82"/>
+            <path d="M8.5 16c2.7-.7 5.1-.5 7.3.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".70"/>
           </svg>
         `;
       }
@@ -872,7 +1161,7 @@
         return `
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M8.2 2.7 21.3 8.2 15.8 21.3 2.7 15.8 8.2 2.7Z" stroke="currentColor" stroke-width="2"/>
-            <path d="M10.2 9.8 14.2 11.4 12.6 15.4 8.6 13.8 10.2 9.8Z" fill="currentColor" opacity=".9"/>
+            <path d="M10.2 9.8 14.2 11.4 12.6 15.4 8.6 13.8 10.2 9.8Z" fill="currentColor" opacity=".95"/>
           </svg>
         `;
       }
@@ -955,9 +1244,11 @@
       els.username.textContent = username;
 
       const [c, glow] = statusColor(status);
-      els.statusText.textContent = status;
+      els.statusText.textContent = prettyStatus(status);
       els.statusDot.style.background = c;
       els.statusDot.style.boxShadow = `0 0 0 4px ${glow}`;
+
+      els.presenceStatusBig.textContent = prettyStatus(status);
 
       const ava = avatarUrl(duser);
       if (ava) els.avatar.src = ava;
@@ -972,12 +1263,16 @@
 
         els.activityTitle.textContent = song;
         els.activityDesc.textContent = [artist, album].filter(Boolean).join(" • ") || "Listening on Spotify";
+        els.activitySourceBig.textContent = "Spotify";
 
         const start = data.spotify?.timestamps?.start;
         const end = data.spotify?.timestamps?.end;
-        if (typeof start === "number" && typeof end === "number" && end > start) startSpotifyTicker(start, end);
-        else stopSpotifyTicker();
 
+        if (typeof start === "number" && typeof end === "number" && end > start) {
+          startSpotifyTicker(start, end);
+        } else {
+          stopSpotifyTicker();
+        }
         return;
       }
 
@@ -987,7 +1282,8 @@
       if (!activity) {
         els.activityIconBox.innerHTML = iconSVG("");
         els.activityTitle.textContent = "No activity detected";
-        els.activityDesc.textContent = "—";
+        els.activityDesc.textContent = "Nothing is currently being displayed.";
+        els.activitySourceBig.textContent = "Idle";
         return;
       }
 
@@ -999,17 +1295,9 @@
       els.activityIconBox.innerHTML = iconSVG(name);
       els.activityTitle.textContent = name;
       els.activityDesc.textContent = extra || "Active now.";
+      els.activitySourceBig.textContent = "Presence";
     };
 
-    /* ===========================
-       LANYARD FIXES:
-       - instant load via REST
-       - auto reconnect + backoff
-       - watchdog (stale connection)
-       - reconnect when tab becomes visible / online
-       =========================== */
-
-    const LANYARD_REST = `https://api.lanyard.rest/v1/users/${USER_ID}`;
     let ws = null;
     let heartbeatTimer = null;
     let reconnectTimer = null;
@@ -1018,11 +1306,17 @@
     let reconnectAttempts = 0;
     const BASE_BACKOFF = 700;
     const MAX_BACKOFF  = 15000;
-    const STALE_MS     = 45_000;   // if no presence update for 45s, consider stale
-    const WATCHDOG_MS  = 10_000;
+    const STALE_MS     = 45000;
+    const WATCHDOG_MS  = 10000;
+
+    const setSocketState = (txt) => {
+      els.socketState.textContent = txt;
+    };
 
     const safeCloseWS = () => {
-      try { if (ws && ws.readyState <= 1) ws.close(1000, "reconnect"); } catch {}
+      try {
+        if (ws && ws.readyState <= 1) ws.close(1000, "reconnect");
+      } catch {}
       ws = null;
     };
 
@@ -1036,10 +1330,11 @@
       reconnectTimer = null;
     };
 
-    const scheduleReconnect = (why) => {
+    const scheduleReconnect = () => {
       stopHeartbeat();
       stopReconnectTimer();
       safeCloseWS();
+      setSocketState("Retrying");
 
       reconnectAttempts++;
       const jitter = Math.random() * 300;
@@ -1053,38 +1348,44 @@
     const startHeartbeat = (interval) => {
       stopHeartbeat();
       heartbeatTimer = setInterval(() => {
-        try{
+        try {
           if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ op: 3 }));
           }
-        }catch{
-          scheduleReconnect("heartbeat send failed");
+        } catch {
+          scheduleReconnect();
         }
       }, interval);
     };
 
     const connectWS = () => {
       stopReconnectTimer();
+      setSocketState("Connecting");
 
-      try{
+      try {
         ws = new WebSocket("wss://api.lanyard.rest/socket");
-      }catch{
-        scheduleReconnect("ws ctor failed");
+      } catch {
+        scheduleReconnect();
         return;
       }
 
       ws.addEventListener("open", () => {
         reconnectAttempts = 0;
-        try{
+        setSocketState("Live");
+        try {
           ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: USER_ID } }));
-        }catch{
-          scheduleReconnect("subscribe send failed");
+        } catch {
+          scheduleReconnect();
         }
       });
 
       ws.addEventListener("message", (event) => {
         let msg = null;
-        try { msg = JSON.parse(event.data); } catch { return; }
+        try {
+          msg = JSON.parse(event.data);
+        } catch {
+          return;
+        }
 
         if (msg.op === 1) {
           if (msg?.d?.heartbeat_interval) startHeartbeat(msg.d.heartbeat_interval);
@@ -1095,39 +1396,42 @@
           if (msg.t === "INIT_STATE" || msg.t === "PRESENCE_UPDATE") {
             lastPresenceAt = Date.now();
             renderPresence(msg.d);
+            setSocketState("Live");
           }
         }
       });
 
       ws.addEventListener("close", () => {
+        setSocketState("Offline");
         stopHeartbeat();
-        scheduleReconnect("ws close");
+        scheduleReconnect();
       });
 
       ws.addEventListener("error", () => {
-        scheduleReconnect("ws error");
+        setSocketState("Error");
+        scheduleReconnect();
       });
     };
 
     const fetchInitialPresence = async () => {
-      try{
+      try {
         const r = await fetch(LANYARD_REST, { cache: "no-store" });
         const j = await r.json();
         if (j && j.success && j.data) {
           lastPresenceAt = Date.now();
           renderPresence(j.data);
         }
-      }catch{}
+      } catch {}
     };
 
-    // Watchdog: if WS silently dies / stops updating
     setInterval(() => {
       if (!ws) return;
       if (document.hidden) return;
       if (!navigator.onLine) return;
+
       const now = Date.now();
       if (lastPresenceAt && (now - lastPresenceAt > STALE_MS)) {
-        scheduleReconnect("stale");
+        scheduleReconnect();
       }
     }, WATCHDOG_MS);
 
@@ -1135,17 +1439,16 @@
       if (!document.hidden) {
         fetchInitialPresence();
         if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
-          scheduleReconnect("visible");
+          scheduleReconnect();
         }
       }
     });
 
     window.addEventListener("online", () => {
       fetchInitialPresence();
-      scheduleReconnect("online");
+      scheduleReconnect();
     });
 
-    // Instant UI: REST first, then WS
     fetchInitialPresence();
     connectWS();
 
@@ -1157,164 +1460,75 @@
         toast("Copy failed");
       }
     });
-
-    const track = document.getElementById("projectTrack");
-    const prevBtn = document.getElementById("prevProject");
-    const nextBtn = document.getElementById("nextProject");
-
-    let projectIndex = 0;
-
-    const updateCarousel = () => {
-      track.style.transform = `translateX(${-projectIndex * 50}%)`;
-      prevBtn.disabled = projectIndex === 0;
-      nextBtn.disabled = projectIndex === 1;
-    };
-
-    prevBtn.addEventListener("click", () => {
-      projectIndex = Math.max(0, projectIndex - 1);
-      updateCarousel();
-    });
-
-    nextBtn.addEventListener("click", () => {
-      projectIndex = Math.min(1, projectIndex + 1);
-      updateCarousel();
-    });
-
-    updateCarousel();
-
-    const overlay = document.getElementById("overlay");
-    const modal = document.getElementById("scriptsModal");
-    const openBtn = document.getElementById("viewScriptsBtn");
-    const closeBtn = document.getElementById("closeModal");
-    const grid = document.getElementById("scriptsGrid");
-
-    const SCRIPTS = [
-      { title: "Adopt Me",      text: "-- In development\n-- Paste your script here later\nprint('Adopt Me')" },
-      { title: "Blox Fruits",   text: "-- In development\n-- Paste your script here later\nprint('Blox Fruits')" },
-      { title: "Arsenal",       text: "-- In development\n-- Paste your script here later\nprint('Arsenal')" },
-      { title: "Doors",         text: "-- In development\n-- Paste your script here later\nprint('Doors')" },
-      { title: "Brookhaven",    text: "-- In development\n-- Paste your script here later\nprint('Brookhaven')" },
-      { title: "Pet Simulator", text: "-- In development\n-- Paste your script here later\nprint('Pet Simulator')" },
-    ];
-
-    const escapeHtml = (str) => {
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    };
-
-    const buildScriptCards = () => {
-      grid.innerHTML = "";
-      for (const item of SCRIPTS){
-        const card = document.createElement("div");
-        card.className = "scriptCard";
-        card.innerHTML = `
-          <div class="scriptTop">
-            <p class="scriptName">${escapeHtml(item.title)}</p>
-            <span class="scriptBadge">In Development</span>
-          </div>
-          <div class="scriptText">Content: <span style="opacity:.85">editable in code</span></div>
-          <div class="scriptActions">
-            <button class="copyBtn" type="button">Copy</button>
-          </div>
-        `;
-        card.querySelector(".copyBtn").addEventListener("click", async () => {
-          try{
-            await navigator.clipboard.writeText(item.text);
-            toast("Copied");
-          }catch{
-            toast("Copy failed");
-          }
-        });
-        grid.appendChild(card);
-      }
-    };
-
-    const setModalOriginFrom = (el) => {
-      const r = el.getBoundingClientRect();
-      modal.style.setProperty("--ox", `${r.left + r.width / 2}px`);
-      modal.style.setProperty("--oy", `${r.top + r.height / 2}px`);
-    };
-
-    const openModal = (fromEl) => {
-      setModalOriginFrom(fromEl);
-      overlay.classList.add("show");
-      modal.classList.add("show");
-      document.body.style.overflow = "hidden";
-    };
-
-    const closeModal = () => {
-      overlay.classList.remove("show");
-      modal.classList.remove("show");
-      document.body.style.overflow = "";
-    };
-
-    buildScriptCards();
-
-    openBtn.addEventListener("click", () => openModal(openBtn));
-    closeBtn.addEventListener("click", closeModal);
-    overlay.addEventListener("click", closeModal);
-
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modal.classList.contains("show")) closeModal();
-    });
   })();
   </script>
 
   <script>
-  (function () {
-    const canvas = document.getElementById('StarsCanvas');
+  (() => {
+    const canvas = document.getElementById("StarsCanvas");
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let W = 0, H = 0, tick = 0;
-    let stars = [], shots = [];
+    let W = 0, H = 0;
+    let stars = [];
+    let shots = [];
+    let particles = [];
+    let tick = 0;
 
     function resize() {
-      W = canvas.width  = window.innerWidth;
+      W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
+      buildStars();
     }
 
     function buildStars() {
       stars = [];
-      for (let i = 0; i < 600; i++) {
-        const bright = Math.random() < 0.12;
-        const blink  = Math.random() < 0.20;
+      const count = Math.min(850, Math.max(380, Math.floor((W * H) / 3400)));
+
+      for (let i = 0; i < count; i++) {
+        const bright = Math.random() < 0.14;
+        const blink = Math.random() < 0.22;
+
         stars.push({
-          x:      Math.random() * W,
-          y:      Math.random() * H,
-          r:      bright ? Math.random() * 1.8 + 0.8 : Math.random() * 1.0 + 0.2,
-          alpha:  bright ? Math.random() * 0.4 + 0.6  : Math.random() * 0.5 + 0.25,
-          speed:  Math.random() * 0.006 + 0.001,
-          phase:  Math.random() * Math.PI * 2,
-          glow:   bright ? Math.random() * 4 + 3 : 0,
-          vy:     Math.random() * 0.5 + 0.25,
-          bright,
+          x: Math.random() * W,
+          y: Math.random() * H,
+          r: bright ? Math.random() * 1.8 + 0.7 : Math.random() * 1.1 + 0.2,
+          alpha: bright ? Math.random() * 0.4 + 0.55 : Math.random() * 0.45 + 0.18,
+          speed: Math.random() * 0.007 + 0.001,
+          phase: Math.random() * Math.PI * 2,
+          glow: bright ? Math.random() * 4 + 2 : 0,
+          vy: Math.random() * 0.18 + 0.03,
           blink,
-          blinkTimer:    Math.random() * 200,
+          blinkTimer: Math.random() * 240,
           blinkDuration: 0,
-          blinking:      false,
+          blinking: false
         });
       }
     }
 
     function spawnShot() {
-      const angle = (Math.random() * 22 + 15) * (Math.PI / 180);
-      const speed = Math.random() * 7 + 8;
       shots.push({
-        x:    Math.random() * W * 0.85,
-        y:    Math.random() * H * 0.40,
-        vx:   Math.cos(angle) * speed,
-        vy:   Math.sin(angle) * speed,
-        tail: Math.random() * 18 + 12,
+        x: Math.random() * W * 0.8,
+        y: Math.random() * H * 0.45,
+        vx: Math.random() * 5 + 8,
+        vy: Math.random() * 2.5 + 5.2,
+        tail: Math.random() * 18 + 16,
         life: 1,
-        fade: Math.random() * 0.012 + 0.008,
-        width: Math.random() * 1.2 + 0.8,
+        fade: Math.random() * 0.013 + 0.008,
+        width: Math.random() * 1.2 + 0.7
+      });
+    }
+
+    function spawnParticle() {
+      particles.push({
+        x: Math.random() * W,
+        y: H + 10,
+        r: Math.random() * 2.2 + .8,
+        vy: Math.random() * 0.8 + 0.25,
+        drift: (Math.random() - .5) * 0.35,
+        alpha: Math.random() * 0.15 + 0.04
       });
     }
 
@@ -1327,23 +1541,23 @@
         if (s.blink) {
           s.blinkTimer--;
           if (s.blinkTimer <= 0 && !s.blinking) {
-            s.blinking      = true;
-            s.blinkDuration = Math.random() * 12 + 6;
-            s.blinkTimer    = Math.random() * 300 + 100;
+            s.blinking = true;
+            s.blinkDuration = Math.random() * 10 + 5;
+            s.blinkTimer = Math.random() * 260 + 110;
           }
           if (s.blinking) {
             s.blinkDuration--;
-            brightMod = s.blinkDuration % 2 < 1 ? 0.05 : 1;
+            brightMod = s.blinkDuration % 2 < 1 ? 0.08 : 1;
             if (s.blinkDuration <= 0) s.blinking = false;
           }
         }
 
-        const al = s.alpha * (0.5 + 0.5 * Math.sin(tick * s.speed + s.phase)) * brightMod;
+        const al = s.alpha * (0.45 + 0.55 * Math.sin(tick * s.speed + s.phase)) * brightMod;
 
-        if (s.bright && s.glow > 0) {
+        if (s.glow > 0) {
           const grd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.glow);
-          grd.addColorStop(0, `rgba(255,255,255,${al * 0.5})`);
-          grd.addColorStop(1, 'rgba(220,220,220,0)');
+          grd.addColorStop(0, `rgba(255,255,255,${al * 0.4})`);
+          grd.addColorStop(1, "rgba(255,255,255,0)");
           ctx.beginPath();
           ctx.arc(s.x, s.y, s.glow, 0, Math.PI * 2);
           ctx.fillStyle = grd;
@@ -1352,45 +1566,65 @@
 
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(225,220,255,${al})`;
+        ctx.fillStyle = `rgba(232,232,255,${al})`;
         ctx.fill();
 
         s.y += s.vy;
-        if (s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+        if (s.y > H + 2) {
+          s.y = -2;
+          s.x = Math.random() * W;
+        }
       }
 
       for (let i = shots.length - 1; i >= 0; i--) {
         const s = shots[i];
 
-        const hgrd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, 3.5);
-        hgrd.addColorStop(0, `rgba(255,255,255,${s.life * 0.9})`);
-        hgrd.addColorStop(1, 'rgba(220,220,220,0)');
+        const hgrd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, 4);
+        hgrd.addColorStop(0, `rgba(255,255,255,${s.life * 0.92})`);
+        hgrd.addColorStop(1, "rgba(255,255,255,0)");
         ctx.beginPath();
-        ctx.arc(s.x, s.y, 3.5, 0, Math.PI * 2);
+        ctx.arc(s.x, s.y, 4, 0, Math.PI * 2);
         ctx.fillStyle = hgrd;
         ctx.fill();
 
         const tx = s.x - s.vx * s.tail;
         const ty = s.y - s.vy * s.tail;
         const lgrd = ctx.createLinearGradient(s.x, s.y, tx, ty);
-        lgrd.addColorStop(0,   `rgba(255,255,255,${s.life * 0.95})`);
-        lgrd.addColorStop(0.3, `rgba(240,240,240,${s.life * 0.50})`);
-        lgrd.addColorStop(1,   'rgba(200,200,200,0)');
+        lgrd.addColorStop(0, `rgba(255,255,255,${s.life * 0.95})`);
+        lgrd.addColorStop(0.35, `rgba(200,220,255,${s.life * 0.40})`);
+        lgrd.addColorStop(1, "rgba(180,190,255,0)");
 
         ctx.beginPath();
         ctx.moveTo(s.x, s.y);
         ctx.lineTo(tx, ty);
         ctx.strokeStyle = lgrd;
-        ctx.lineWidth   = s.width * s.life;
-        ctx.lineCap     = 'round';
+        ctx.lineWidth = s.width * s.life;
+        ctx.lineCap = "round";
         ctx.stroke();
 
-        s.x    += s.vx;
-        s.y    += s.vy;
+        s.x += s.vx;
+        s.y += s.vy;
         s.life -= s.fade;
 
-        if (s.life <= 0 || s.x > W + 100 || s.y > H + 100) shots.splice(i, 1);
+        if (s.life <= 0 || s.x > W + 100 || s.y > H + 100) {
+          shots.splice(i, 1);
+        }
       }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(180,190,255,${p.alpha})`;
+        ctx.fill();
+
+        p.y -= p.vy;
+        p.x += p.drift;
+
+        if (p.y < -20) particles.splice(i, 1);
+      }
+
+      if (Math.random() < 0.035 && particles.length < 45) spawnParticle();
 
       tick++;
       requestAnimationFrame(drawFrame);
@@ -1398,15 +1632,67 @@
 
     function init() {
       resize();
-      buildStars();
-      setTimeout(spawnShot, 600);
-      setInterval(spawnShot, 2500);
+      setTimeout(spawnShot, 700);
+      setInterval(spawnShot, 2600);
       drawFrame();
-      window.addEventListener('resize', () => { resize(); buildStars(); });
+      window.addEventListener("resize", resize);
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-    else init();
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+
+  <script>
+  (() => {
+    const shell = document.getElementById("tiltShell");
+    const mainCard = document.getElementById("mainCard");
+    const sideCard = document.getElementById("sideCard");
+
+    if (!shell || !mainCard || !sideCard) return;
+
+    let mx = 0;
+    let my = 0;
+    let tx = 0;
+    let ty = 0;
+    let raf = null;
+
+    const animate = () => {
+      tx += (mx - tx) * 0.08;
+      ty += (my - ty) * 0.08;
+
+      mainCard.style.transform = `rotateY(${tx * 0.9}deg) rotateX(${ty * -0.9}deg) translateZ(0)`;
+      sideCard.style.transform = `rotateY(${tx * 0.65}deg) rotateX(${ty * -0.65}deg) translateZ(0)`;
+
+      raf = requestAnimationFrame(animate);
+    };
+
+    shell.addEventListener("mousemove", (e) => {
+      const rect = shell.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width;
+      const py = (e.clientY - rect.top) / rect.height;
+
+      mx = (px - 0.5) * 8;
+      my = (py - 0.5) * 8;
+
+      if (!raf) animate();
+    });
+
+    shell.addEventListener("mouseleave", () => {
+      mx = 0;
+      my = 0;
+      if (!raf) animate();
+
+      setTimeout(() => {
+        if (Math.abs(tx) < 0.03 && Math.abs(ty) < 0.03) {
+          mainCard.style.transform = "";
+          sideCard.style.transform = "";
+        }
+      }, 240);
+    });
   })();
   </script>
 
@@ -1414,7 +1700,7 @@
   (async () => {
     const SUPABASE_URL = "https://clmyidsidesaexysiyns.supabase.co";
     const SUPABASE_KEY = "sb_publishable_Th8CO3GKHVkAUaUQBjgCgg_nkaqoVow";
-    const SESSION_KEY = "_myviews_v1";
+    const SESSION_KEY = "_myviews_v2";
 
     const el = document.getElementById("ViewCount");
     if (!el) return;
@@ -1426,10 +1712,10 @@
     };
 
     const format = (n) => {
-      if (n >= 1e6) return (n/1e6).toFixed(1) + "M";
+      if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
       if (n >= 1000) {
-        const t = Math.floor(n/100);
-        const w = Math.floor(t/10);
+        const t = Math.floor(n / 100);
+        const w = Math.floor(t / 10);
         const d = t % 10;
         return w + "," + d + "k";
       }
@@ -1440,10 +1726,10 @@
       let exact = false;
       el.textContent = format(n);
       el.style.cursor = "pointer";
-      el.addEventListener("click", () => {
+      el.onclick = () => {
         exact = !exact;
         el.textContent = exact ? n.toLocaleString("en-US") : format(n);
-      });
+      };
     };
 
     try {
